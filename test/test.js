@@ -1,33 +1,31 @@
 
-var pthrough = require('./');
+var pthrough = require('../');
 var B = require('bluebird');
 var fs = require('fs');
 var split = require('split');
-
+var path = require('path');
 var through = require('through2');
 
-fs.createReadStream('test.txt', 'utf8')
+fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8')
     .pipe(split())
-    .pipe(through({objectMode: true, highWaterMark: 3}, function(chunk, e, cb) {
-        console.log('Input', chunk); 
-        this.push(chunk); 
-        cb();
-    }))
-    .pipe(pthrough({limit: 3}, function(line) {
-        return B.delay(Math.ceil(300 * Math.random())).then(function() {
-            return line;
+    .pipe(pthrough({tag: 'start'}, function(line) {
+        console.log("Received", line, typeof(line));
+        var delayed = B.delay(100).then(function() {
+            return line ? parseFloat(line) : null;
         });
+        return this.push(delayed);
     }))
-    .map(function(el) {
-        console.log('Element', el);
+    .map({tag: 'map'}, function(el) {
+        console.log('Multiply', el, typeof(el));
         return el * 2;
     })
-    .reduce(function(acc, el) {
-        console.log("Reduce", acc, el);
+    .reduce({tag: 'reduce'}, function(acc, el) {
+        console.log("Accumulate", acc, el, typeof(el));
         return acc + el;
-    }, 0)
+    })
     .then(function(sum) {
-        console.log("Sum", sum);
+        console.log("Result", sum);
     }).catch(function(e) {
         console.error(e.stack);
     })
+
