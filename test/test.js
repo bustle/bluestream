@@ -14,7 +14,7 @@ t.test('basic', function(t) {
     .pipe(split())
     .pipe(ps.through(function(line) {
         console.log("Received", line, typeof(line));
-        var delayed = B.delay(10).then(function() {
+        var delayed = B.delay(1).then(function() {
             return line ? parseFloat(line) : null;
         });
         return this.push(delayed);
