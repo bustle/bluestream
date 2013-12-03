@@ -1,0 +1,24 @@
+{
+  "name": "through-promise",
+  "version": "0.1.0",
+  "description": "Through with promises",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "through",
+    "promise",
+    "stream"
+  ],
+  "author": "spion",
+  "license": "MIT",
+  "dependencies": {
+    "through": "~2.3.4",
+    "through2": "~0.2.3",
+    "bluebird": "~0.11.5-0"
+  },
+  "devDependencies": {
+    "split": "~0.2.10"
+  }
+}
