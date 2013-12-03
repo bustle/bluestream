@@ -20,15 +20,9 @@ var exports = module.exports = function promiseThrough(opts, fn) {
     fn = fn.bind(stream);
 
     function incoming(data, enc, done) {     
-        Promise.cast(data).then(function(data2) {
-            return fn(data2)
-        }).done(
-            function(v) { 
-                done(); 
-            }, 
-            function(e) { 
-                done(e); 
-            });
+        Promise.cast([data, enc]).spread(fn)
+        .done(function(v) { done();  }, 
+              function(e) { done(e); });
     }
 
     function ended() { 
