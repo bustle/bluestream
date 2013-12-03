@@ -20,9 +20,10 @@ function defaults(opts, fn, end) {
 // PromiseStream
 
 util.inherits(PromiseStream, Transform);
-function PromiseStream(args) {
+function PromiseStream(opts, fn, end) {
     if (!(this instanceof PromiseStream))
-        return new PromiseStream(args)
+        return new PromiseStream(opts, fn, end)
+    var args = defaults(opts, fn, end);
     this.args = args;
     this._streamEnd = Promise.defer();
     Transform.call(this, args.opts);
@@ -40,7 +41,8 @@ function incoming(data, enc, done) {
 
 PromiseStream.prototype._flush = complete
 function complete(done) {
-    if (!this.args.end) return done();
+    if (!this.args.end) 
+        return done();
     Promise.fulfilled()
     .bind(this)
     .then(this.args.end)
@@ -78,9 +80,11 @@ function promise() {
 // MapPromiseStream
 
 util.inherits(MapPromiseStream, PromiseStream);
-function MapPromiseStream(args) {
-    PromiseStream.call(this, args);
-    this.args.mapfn = args.fn;
+function MapPromiseStream(opts, fn) {
+    if (!(this instanceof MapPromiseStream))
+        return new MapPromiseStream(opts, fn)
+    PromiseStream.call(this, opts, fn);
+    this.args.mapfn = this.args.fn;
     this.args.fn = mapStreamFn;
 }
 
@@ -91,14 +95,18 @@ function mapStreamFn(el) {
 // ReducePromiseStream
 
 util.inherits(ReducePromiseStream, PromiseStream);
-function ReducePromiseStream(args) {
-    PromiseStream.call(this, args);
-    this.args.acc = null;
-    this.args.reducefn = args.fn;
+function ReducePromiseStream(opts, fn, initial) {
+    if (!(this instanceof ReducePromiseStream))
+        return new ReducePromiseStream(opts, fn, initial)
+    PromiseStream.call(this, opts, fn);
+    this.args.reducefn = this.args.fn;
     this.args.fn = reduceStreamFn;
     this.args.end = reduceStreamEnd;
     this.promise = reduceStreamPromise;
+
     this._defer = Promise.defer();
+    this._initial = initial;
+    this._acc = null;
     this.on('error', this.rejectPromise);
 }
 
@@ -111,37 +119,29 @@ ReducePromiseStream.prototype.rejectPromise = function(e) {
 }
 
 function reduceStreamFn(el) {   
-    var initial = this.args.initial,
-        acc = this.args.acc;
+    var initial = this._initial,
+        acc = this._acc;
     if (acc === null) 
         acc = initial ? Promise.cast(initial) 
             : Promise.cast(el);
     else            
         acc = Promise.all([acc, el])
             .spread(this.args.reducefn);
-    this.args.acc = acc;            
+    this._acc = acc;            
     return this.push(acc);
 
 }
 
 function reduceStreamEnd() {
-    return this.args.acc
+    return this._acc
         .bind(this._defer)
         .then(this._defer.fulfill);
 }
 
 // API
 
-exports.through = function promiseThrough(opts, fn, end) {
-    var args = defaults(opts, fn, end);
-    return new PromiseStream(args);
-}
+exports.through = PromiseStream;
+exports.map = MapPromiseStream;
+exports.reduce = ReducePromiseStream;
 
-exports.map = function promiseMap (mopts, f) {
-    return new MapPromiseStream(defaults(mopts, f));
-};
-
-exports.reduce = function(mopts, f, initial) {
-    return new ReducePromiseStream(defaults(mopts, f, initial));
-}
 
