@@ -14,7 +14,7 @@ var through = require('through2');
 
 fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8')
     .pipe(split())
-    .pipe({limit: 3}, pthrough(function(line) {
+    .pipe(pthrough({limit: 3}, function(line) {
         var delayed = B.delay(100).then(function() {
             return line ? parseFloat(line) : null;
         });
