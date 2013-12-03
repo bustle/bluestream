@@ -1,6 +1,6 @@
 # promise-streams  
 
-A collection of streams that work well with promises
+A collection of streams that work well with promises (through, map, reduce)
 
 # example
 

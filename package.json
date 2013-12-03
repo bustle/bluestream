@@ -1,7 +1,7 @@
 {
-  "name": "through-promise",
+  "name": "promise-streams",
   "version": "0.1.0",
-  "description": "Through with promises",
+  "description": "A collection of streams that work well with promises (through, map, reduce)",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
