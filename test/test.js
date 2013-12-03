@@ -5,11 +5,16 @@ var fs = require('fs');
 var split = require('split');
 var path = require('path');
 
-fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8')
+var t = require('blue-tape');
+
+
+t.test('basic', function(t) {
+
+    return fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8')
     .pipe(split())
     .pipe(ps.through(function(line) {
         console.log("Received", line, typeof(line));
-        var delayed = B.delay(100).then(function() {
+        var delayed = B.delay(10).then(function() {
             return line ? parseFloat(line) : null;
         });
         return this.push(delayed);
@@ -24,7 +29,7 @@ fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8')
     })
     .then(function(sum) {
         console.log("Result", sum);
-    }).catch(function(e) {
-        console.error(e.stack);
-    })
+        t.equals(sum, 90);
+    });
 
+});
