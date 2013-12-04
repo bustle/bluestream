@@ -73,6 +73,13 @@ process.stdin.pipe(split()).pipe(es.reduce(function(acc, el) {
 });
 ```
 
+###$ ps.wait
+
+`(s: Stream) => Promise`
+
+Wait for the stream to end. Also captures errors.
+
+
 #### PromiseStream.push
 
 Like `this.push` in [through2](//github.com/rvagg/through2), but takes promise
