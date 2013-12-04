@@ -27,12 +27,12 @@ var downloadAllFrom = urls =>
     .pipe(select('.post a img', el => el.attributes.SRC))
     .pipe(ps.map({limit: 4}, imgurl => 
         ps.wait(download(imgurl, url))))
-    .reduce((imagesPerUrl, file) => acc + 1, 0))) 
-  .reduce((count, imagesPerUrl) => count + imagesPerUrl);  
+    .reduce((imagesPerUrl, stream) => imagesPerUrl + 1, 0))) 
+  .reduce((total, imagesPerUrl) => total + imagesPerUrl);  
 
 downloadAllFrom(['http://imgur.com/']).done(
-    count  => console.log(count, "images downloaded"), 
-    err    => console.error(err.stack))
+    total => console.log(total, "images downloaded"), 
+    err   => console.error(err.stack))
 ```
 
 
