@@ -35,17 +35,19 @@ function incoming(data, enc, done) {
     .bind(this)
     .spread(this.args.fn)
     .then(nothing) // to avoid passing values
-    .then(nothing)
     .done(done, done);
 }
 
 PromiseStream.prototype._flush = complete
 function complete(done) {
     if (!this.args.end) 
-        return done();
+        this.args.end = nothing;
     Promise.fulfilled()
     .bind(this)
     .then(this.args.end)
+    .bind(this._streamEnd)
+    .then(nothing)
+    .then(this._streamEnd.resolve)
     .then(nothing)
     .done(done, done);
 
@@ -72,9 +74,10 @@ function reduce(opts, fn, initial) {
     return reducer.promise();
 }
 
+PromiseStream.prototype.wait =
 PromiseStream.prototype.promise = promise;
 function promise() {
-    return this._streamEnd;
+    return this._streamEnd.promise;
 }
 
 // MapPromiseStream
@@ -107,17 +110,20 @@ function ReducePromiseStream(opts, fn, initial) {
 
     this.args.fn = reduceStreamFn;
     this.args.end = reduceStreamEnd;
-    this.promise = reduceStreamPromise;
 
     this.on('error', this.rejectPromise);
 }
 
-function reduceNext(acc, el) { 
-    return el; 
-}
-
+ReducePromiseStream.prototype.wait =
+ReducePromiseStream.prototype.promise = reduceStreamPromise;
 function reduceStreamPromise() {
     return this._defer.promise;
+}
+
+
+
+function reduceNext(acc, el) { 
+    return el; 
 }
 
 ReducePromiseStream.prototype.rejectPromise = function(e) {
