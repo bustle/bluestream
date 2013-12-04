@@ -102,7 +102,7 @@ function ReducePromiseStream(opts, fn, initial) {
     PromiseStream.call(this, opts, fn);
     this.reducefn = this.args.fn;
     this._defer = Promise.defer();
-    this._initial = initial;
+    this._initial = this.args.end;
     this._acc = null;
 
     this.args.fn = reduceStreamFn;
@@ -131,8 +131,8 @@ function reduceStreamFn(el) {
         acc = initial ? Promise.cast(initial) 
             : Promise.cast(el);
     else            
-        acc = Promise.all([acc, el])
-            .spread(this.reducefn);
+        acc = Promise.join(acc, el)
+            .spread(this.reducefn);                
     this._acc = acc;            
     return this.push(acc);
 
@@ -147,10 +147,13 @@ function reduceStreamEnd() {
 // wait
 
 function waitStream(s) {
-    var defer = Promise.defer();
-    s.on('end', defer.fulfill);
-    s.on('error', defer.reject)
-    return defer.promise;
+    var d = Promise.defer();
+    var resolve = d.resolve.bind(d, s);
+    var reject = d.reject.bind(d);
+    s.on('end', resolve);
+    s.on('finish', resolve);
+    s.on('error', reject)
+    return d.promise;
 }
 
 // API
