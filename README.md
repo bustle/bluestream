@@ -4,36 +4,37 @@ A collection of streams that work well with promises (through, map, reduce)
 
 # example
 
-```js
-var ps = require('promise-stream');
-var B = require('bluebird');
-var fs = require('fs');
-var split = require('split');
-var path = require('path');
+Using ES6 arrow functions:
 
-fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8')
-    .pipe(split())
-    .pipe(ps.through(function(line) {
-        console.log("Received", line, typeof(line));
-        var delayed = B.delay(100).then(function() {
-            return line ? parseFloat(line) : null;
-        });
-        return this.push(delayed);
-    }))
-    .map(function(el) {
-        console.log('Multiply', el, typeof(el));
-        return el * 2;
-    })
-    .reduce(function(acc, el) {
-        console.log("Accumulate", acc, el, typeof(el));
-        return acc + el;
-    })
-    .then(function(sum) {
-        console.log("Result", sum);
-    }).catch(function(e) {
-        console.error(e.stack);
-    })
+```js
+var Promise = require('bluebird'),
+    request = require('request'),
+    path = require('path'),
+    fs = require('fs'),
+    ps = require('promise-streams'),
+    select = require('./select-elements');
+ 
+Promise.promisifyAll(request);
+
+var download = url =>
+  request('http:' + url).pipe(
+    fs.createWriteStream(
+        'images/' + path.basename(url)));
+
+var imageStreams = urls => 
+  Promise.all(urls.map(url => 
+    request(url)
+    .pipe(select('.post a img', el => el.attributes.SRC))
+    .pipe(ps.map({limit: 4}, imgurl => 
+        ps.wait(download(imgurl, url))))
+    .reduce((acc, s) => acc + 1, 0)))
+  .reduce((acc, imgs) => acc + imgs);   
+
+imageStreams(['http://imgur.com/']).done(
+    count  => console.log(count, "images downloaded"), 
+    err    => console.error(err.stack))
 ```
+
 
 # api
 
@@ -47,12 +48,27 @@ return a promise that indicates when the object/chunk are fully processed.
 
 Returns a PromiseStream. 
 
+Options:
+
+  * `limit` - The maximum number of concurrent promises that are allowed. When 
+    this limit is reached, the stream will stop processing data and will start 
+    buffering incoming objects. Defaults to `64`, same as highWatermark for 
+    object streams
+
+  * `highWatermark` - the size (in objects) of the buffer mentioned above. When
+    this buffer fills up, the backpressure mechanism will activate. Its passed
+    to node's transform stream.
+
+The other options are also passed to node's Transform stream constructor.
+
 #### ps.map
 
 `([opts:Options,] fn: (data[, enc]) => Promise) => MapPromiseStream`
 
 Create a new MapPromiseStream. The function should return a promise for the 
 next object that will be pushed to the stream. 
+
+Options: Same as `ps.through`
 
 #### ps.reduce
 

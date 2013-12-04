@@ -24,33 +24,44 @@ function PromiseStream(opts, fn, end) {
     if (!(this instanceof PromiseStream))
         return new PromiseStream(opts, fn, end)
     var args = defaults(opts, fn, end);
-    this.args = args;
-    this._streamEnd = Promise.defer();
     Transform.call(this, args.opts);
+    this._fn = args.fn;
+    this._end = args.end;
+    this._streamEnd = Promise.defer();
+    this._limit = Math.max(1, args.opts.limit || 64);
+    this._queue = [];
 }
 
 PromiseStream.prototype._transform = incoming;
 function incoming(data, enc, done) {     
-    Promise.cast([data, enc])
-    .bind(this)
-    .spread(this.args.fn)
-    .then(nothing) // to avoid passing values
-    .done(done, done);
+    var queue = this._queue;
+    var processed = Promise.cast([data, enc])
+        .bind(this)
+        .spread(this._fn)
+        .then(nothing) // to avoid keeping values.
+
+    queue.push(processed);
+    if (queue.length >= this._limit)
+        queue.shift().done(done, done);
+    else
+        done();
 }
 
 PromiseStream.prototype._flush = complete
 function complete(done) {
-    if (!this.args.end) 
-        this.args.end = nothing;
-    Promise.fulfilled()
+    if (!this._end) 
+        this._end = nothing;
+    Promise.all(this._queue)
+    .then(nothing)
     .bind(this)
-    .then(this.args.end)
-    .bind(this._streamEnd)
-    .then(nothing)
-    .then(this._streamEnd.resolve)
-    .then(nothing)
+    .then(this._end)
+    .then(this._finishUp)
     .done(done, done);
 
+}
+
+PromiseStream.prototype._finishUp = function() {
+    this._streamEnd.resolve();
 }
 
 PromiseStream.prototype.push = push;
@@ -87,12 +98,12 @@ function MapPromiseStream(opts, fn) {
     if (!(this instanceof MapPromiseStream))
         return new MapPromiseStream(opts, fn)
     PromiseStream.call(this, opts, fn);
-    this.args.mapfn = this.args.fn;
-    this.args.fn = mapStreamFn;
+    this._mapfn = this._fn;
+    this._fn = mapStreamFn;
 }
 
 function mapStreamFn(el) {
-    return this.push(this.args.mapfn(el));
+    return this.push(this._mapfn(el));
 }    
 
 // ReducePromiseStream
@@ -103,13 +114,13 @@ function ReducePromiseStream(opts, fn, initial) {
     if (!(this instanceof ReducePromiseStream))
         return new ReducePromiseStream(opts, fn, initial)
     PromiseStream.call(this, opts, fn);
-    this.reducefn = this.args.fn;
+    this._reducefn = this._fn;
     this._defer = Promise.defer();
-    this._initial = this.args.end;
+    this._initial = this._end;
     this._acc = null;
 
-    this.args.fn = reduceStreamFn;
-    this.args.end = reduceStreamEnd;
+    this._fn = reduceStreamFn;
+    this._end = reduceStreamEnd;
 
     this.on('error', this.rejectPromise);
 }
@@ -120,17 +131,11 @@ function reduceStreamPromise() {
     return this._defer.promise;
 }
 
-
-
-function reduceNext(acc, el) { 
-    return el; 
-}
-
 ReducePromiseStream.prototype.rejectPromise = function(e) {
     this._defer.reject(e);
 }
 
-function reduceStreamFn(el) {   
+function reduceStreamFn(el, enc) {   
     var initial = this._initial,
         acc = this._acc;
     if (acc === null) 
@@ -138,15 +143,14 @@ function reduceStreamFn(el) {
             ? Promise.cast(initial) 
             : Promise.cast(el);
     else            
-        acc = Promise.join(acc, el)
-            .spread(this.reducefn);                
+        acc = Promise.join(acc, el, enc).spread(this._reducefn);
     this._acc = acc;            
     return this.push(acc);
 
 }
 
 function reduceStreamEnd() {
-    return this._acc
+    return Promise.cast(this._acc)
         .bind(this._defer)
         .then(this._defer.fulfill);
 }
