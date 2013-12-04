@@ -21,16 +21,16 @@ var download = url =>
     fs.createWriteStream(
         'images/' + path.basename(url)));
 
-var imageStreams = urls => 
+var downloadAllFrom = urls => 
   Promise.all(urls.map(url => 
     request(url)
     .pipe(select('.post a img', el => el.attributes.SRC))
     .pipe(ps.map({limit: 4}, imgurl => 
         ps.wait(download(imgurl, url))))
-    .reduce((acc, s) => acc + 1, 0)))
-  .reduce((acc, imgs) => acc + imgs);   
+    .reduce((imagesPerUrl, file) => acc + 1, 0))) 
+  .reduce((count, imagesPerUrl) => count + imagesPerUrl);  
 
-imageStreams(['http://imgur.com/']).done(
+downloadAllFrom(['http://imgur.com/']).done(
     count  => console.log(count, "images downloaded"), 
     err    => console.error(err.stack))
 ```
