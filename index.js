@@ -134,7 +134,7 @@ function reduceStreamFn(el) {
     var initial = this._initial,
         acc = this._acc;
     if (acc === null) 
-        acc = typeof(initial) === 'undefined' 
+        acc = typeof(initial) !== 'undefined' 
             ? Promise.cast(initial) 
             : Promise.cast(el);
     else            
