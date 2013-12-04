@@ -100,8 +100,7 @@ function ReducePromiseStream(opts, fn, initial) {
     if (!(this instanceof ReducePromiseStream))
         return new ReducePromiseStream(opts, fn, initial)
     PromiseStream.call(this, opts, fn);
-    this.reducefn = this.args.fn === identity 
-        ? reduceNext : this.args.fn;
+    this.reducefn = this.args.fn;
     this._defer = Promise.defer();
     this._initial = initial;
     this._acc = null;
@@ -133,7 +132,7 @@ function reduceStreamFn(el) {
             : Promise.cast(el);
     else            
         acc = Promise.all([acc, el])
-            .spread(this.args.reducefn);
+            .spread(this.reducefn);
     this._acc = acc;            
     return this.push(acc);
 
