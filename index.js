@@ -28,7 +28,7 @@ function PromiseStream(opts, fn, end) {
     this._fn = args.fn;
     this._end = args.end;
     this._streamEnd = Promise.defer();
-    this._limit = Math.max(1, args.opts.limit || 64);
+    this._limit = Math.max(1, args.opts.limit || 16);
     this._queue = [];
 }
 

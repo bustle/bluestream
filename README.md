@@ -52,7 +52,7 @@ Options:
 
   * `limit` - The maximum number of concurrent promises that are allowed. When 
     this limit is reached, the stream will stop processing data and will start 
-    buffering incoming objects. Defaults to `64`, same as highWatermark for 
+    buffering incoming objects. Defaults to `16`, same as highWatermark for 
     object streams
 
   * `highWatermark` - the size (in objects) of the buffer mentioned above. When
