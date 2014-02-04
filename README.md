@@ -25,7 +25,7 @@ var downloadAllFrom = urls =>
   Promise.all(urls.map(url => 
     request(url)
     .pipe(select('.post a img', el => el.attributes.SRC))
-    .pipe(ps.map({limit: 4}, imgurl => 
+    .pipe(ps.map({concurrent: 4}, imgurl => 
         ps.wait(download(imgurl, url))))
     .reduce((imagesPerUrl, stream) => imagesPerUrl + 1, 0))) 
   .reduce((total, imagesPerUrl) => total + imagesPerUrl);  
@@ -50,10 +50,9 @@ Returns a PromiseStream.
 
 Options:
 
-  * `limit` - The maximum number of concurrent promises that are allowed. When 
-    this limit is reached, the stream will stop processing data and will start 
-    buffering incoming objects. Defaults to `16`, same as highWatermark for 
-    object streams
+  * `concurrent` - The maximum number of concurrent promises that are allowed. 
+    When this limit is reached, the stream will stop processing data and will 
+    start buffering incoming objects. Defaults to `1`
 
   * `highWatermark` - the size (in objects) of the buffer mentioned above. When
     this buffer fills up, the backpressure mechanism will activate. Its passed

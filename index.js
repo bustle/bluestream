@@ -12,8 +12,8 @@ function defaults(opts, fn, end) {
     if (!fn) fn = identity;
     if (typeof(opts.objectMode) === 'undefined')
         opts.objectMode = true;
-    if (opts.limit)
-        opts.highWaterMark = opts.limit;
+    if (opts.concurrent)
+        opts.highWaterMark = opts.concurrent;
     return {opts: opts, fn: fn, end: end};
 }
 
@@ -28,7 +28,7 @@ function PromiseStream(opts, fn, end) {
     this._fn = args.fn;
     this._end = args.end;
     this._streamEnd = Promise.defer();
-    this._limit = Math.max(1, args.opts.limit || 16);
+    this._concurrent = Math.max(1, args.opts.concurrent || 1);
     this._queue = [];
 }
 
@@ -40,8 +40,9 @@ function incoming(data, enc, done) {
         .spread(this._fn)
         .then(nothing) // to avoid keeping values.
 
+    processed.catch(done);
     queue.push(processed);
-    if (queue.length >= this._limit)
+    if (queue.length >= this._concurrent)
         queue.shift().done(done, done);
     else
         done();
