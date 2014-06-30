@@ -5,15 +5,22 @@ var Transform = require('stream').Transform;
 function nothing(x) { }
 function identity(x) { return x; }
 
+function defer() {
+    var resolve, reject;
+    var promise = new Promise(function(cb, eb) {
+        resolve = cb; reject = eb;
+    });
+    return { resolve: resolve, reject: reject, promise: promise };
+}
+
+
 function defaults(opts, fn, end) {
     if (typeof(opts) === 'function') {
         end = fn; fn = opts; opts = {};
     }
-    if (!fn) fn = identity;
-    if (typeof(opts.objectMode) === 'undefined')
+    if (fn == null) fn = identity;
+    if (opts.objectMode == null)
         opts.objectMode = true;
-    if (opts.concurrent)
-        opts.highWaterMark = opts.concurrent;
     return {opts: opts, fn: fn, end: end};
 }
 
@@ -29,7 +36,7 @@ function PromiseStream(opts, fn, end) {
     Transform.call(this, args.opts);
     this._fn = args.fn;
     this._end = args.end;
-    this._streamEnd = Promise.defer();
+    this._streamEnd = defer();
     this._concurrent = Math.max(1, args.opts.concurrent || 1);
     this._queue = [];
 }
@@ -121,25 +128,22 @@ function ReducePromiseStream(opts, fn, initial) {
         return new ReducePromiseStream(opts, fn, initial)
     PromiseStream.call(this, opts, fn);
     this._reducefn = this._fn;
-    this._defer = Promise.defer();
+    this._reduceResult = defer();
     this._initial = this._end;
     this._acc = null;
 
     this._fn = reduceStreamFn;
     this._end = reduceStreamEnd;
 
-    this.on('error', this.rejectPromise);
+    this.on('error', this._reduceResult.reject);
 }
 
 ReducePromiseStream.prototype.wait =
 ReducePromiseStream.prototype.promise = reduceStreamPromise;
 function reduceStreamPromise() {
-    return this._defer.promise;
+    return this._reduceResult.promise;
 }
 
-ReducePromiseStream.prototype.rejectPromise = function(e) {
-    this._defer.reject(e);
-}
 
 function reduceStreamFn(el, enc) {
     var initial = this._initial,
@@ -157,26 +161,19 @@ function reduceStreamFn(el, enc) {
 
 function reduceStreamEnd() {
     return Promise.cast(this._acc)
-        .bind(this._defer)
-        .then(this._defer.fulfill);
+        .then(this._reduceResult.resolve);
 }
 
+//---------------------------
 // wait
+//---------------------------
 
 function waitStream(s) {
-    var d = Promise.defer();
-    var resolve = d.resolve.bind(d, s);
-    var reject = d.reject.bind(d);
-    s.on('end', resolve);
-    s.on('finish', resolve);
-    s.on('error', reject)
-    return d.promise;
-}
-
-// collect
-
-function collectStream(s) {
-    
+    return new Promise(function(resolve, reject) {
+        s.on('end', resolve);
+        s.on('finish', resolve);
+        s.on('error', reject)
+    });
 }
 
 
