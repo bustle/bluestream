@@ -6,8 +6,8 @@ function nothing(x) { }
 function identity(x) { return x; }
 
 function defaults(opts, fn, end) {
-    if (typeof(opts) === 'function') { 
-        end = fn; fn = opts; opts = {}; 
+    if (typeof(opts) === 'function') {
+        end = fn; fn = opts; opts = {};
     }
     if (!fn) fn = identity;
     if (typeof(opts.objectMode) === 'undefined')
@@ -17,7 +17,9 @@ function defaults(opts, fn, end) {
     return {opts: opts, fn: fn, end: end};
 }
 
+//---------------------------------------
 // PromiseStream
+//---------------------------------------
 
 util.inherits(PromiseStream, Transform);
 function PromiseStream(opts, fn, end) {
@@ -33,7 +35,7 @@ function PromiseStream(opts, fn, end) {
 }
 
 PromiseStream.prototype._transform = incoming;
-function incoming(data, enc, done) {     
+function incoming(data, enc, done) {
     var queue = this._queue;
     var processed = Promise.cast([data, enc])
         .bind(this)
@@ -50,7 +52,7 @@ function incoming(data, enc, done) {
 
 PromiseStream.prototype._flush = complete
 function complete(done) {
-    if (!this._end) 
+    if (!this._end)
         this._end = nothing;
     Promise.all(this._queue)
     .then(nothing)
@@ -69,7 +71,7 @@ PromiseStream.prototype.push = push;
 function push(data) {
     return Promise.cast(data)
     .bind(this)
-    .then(Transform.prototype.push); 
+    .then(Transform.prototype.push);
 }
 
 PromiseStream.prototype.map = map;
@@ -92,7 +94,9 @@ function promise() {
     return this._streamEnd.promise;
 }
 
+//---------------------------------------
 // MapPromiseStream
+//---------------------------------------
 
 util.inherits(MapPromiseStream, PromiseStream);
 function MapPromiseStream(opts, fn) {
@@ -105,10 +109,11 @@ function MapPromiseStream(opts, fn) {
 
 function mapStreamFn(el) {
     return this.push(this._mapfn(el));
-}    
+}
 
+//---------------------------
 // ReducePromiseStream
-
+//---------------------------
 
 util.inherits(ReducePromiseStream, PromiseStream);
 function ReducePromiseStream(opts, fn, initial) {
@@ -136,16 +141,16 @@ ReducePromiseStream.prototype.rejectPromise = function(e) {
     this._defer.reject(e);
 }
 
-function reduceStreamFn(el, enc) {   
+function reduceStreamFn(el, enc) {
     var initial = this._initial,
         acc = this._acc;
-    if (acc === null) 
-        acc = typeof(initial) !== 'undefined' 
-            ? Promise.cast(initial) 
+    if (acc === null)
+        acc = typeof(initial) !== 'undefined'
+            ? Promise.cast(initial)
             : Promise.cast(el);
-    else            
+    else
         acc = Promise.join(acc, el, enc).spread(this._reducefn);
-    this._acc = acc;            
+    this._acc = acc;
     return this.push(acc);
 
 }
@@ -168,9 +173,18 @@ function waitStream(s) {
     return d.promise;
 }
 
+// collect
+
+function collectStream(s) {
+    
+}
+
+
+
 // API
 
 exports.through = PromiseStream;
 exports.map = MapPromiseStream;
 exports.reduce = ReducePromiseStream;
-exports.wait = waitStream
+exports.wait = waitStream;
+

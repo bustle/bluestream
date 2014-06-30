@@ -38,7 +38,7 @@ t.test('map-wait', function(t) {
     return lines().pipe(delayer())
     .map(function(el) {
         return B.delay(1).then(function() {
-            return last = el;
+            return (last = el);
         })
     }).wait().then(function() {
         t.equal(last, 9, 'should wait for the last element')
