@@ -44,17 +44,23 @@ function PromiseStream(opts, fn, end) {
 PromiseStream.prototype._transform = incoming;
 function incoming(data, enc, done) {
     var queue = this._queue;
-    var processed = Promise.cast([data, enc])
+    var processed = Promise.resolve([data, enc])
         .bind(this)
         .spread(this._fn)
         .then(nothing) // to avoid keeping values.
 
     processed.catch(done);
     queue.push(processed);
-    if (queue.length >= this._concurrent)
-        queue.shift().done(done, done);
-    else
+    if (queue.length >= this._concurrent) {
+        // The delay is a workaround for the bad design of
+        // node streams which forbid you to call done twice
+        // at the same tick on the event loop, even if you
+        // had events happening at the exact same tick
+        queue.shift().delay(1).done(done, done);
+    }
+    else {
         done();
+    }
 }
 
 PromiseStream.prototype._flush = complete
@@ -177,6 +183,31 @@ function waitStream(s) {
 }
 
 
+//---------------------------
+// pipe
+//---------------------------
+
+function pipe(source, sink) {
+    var resolve, reject;
+    return new Promise(function(resolve_, reject_) {
+        resolve = resolve_;
+        reject = reject_;
+        source
+            .on("end", resolve)
+            .on("error", reject)
+            .pipe(sink)
+            .on("error", reject);
+    }).finally(function() {
+        source.removeListener("end", resolve);
+        source.removeListener("error", reject);
+        sink.removeListener("error", reject);
+    });
+}
+
+//---------------------------
+// pipeline
+//---------------------------
+
 
 // API
 
@@ -184,4 +215,4 @@ exports.through = PromiseStream;
 exports.map = MapPromiseStream;
 exports.reduce = ReducePromiseStream;
 exports.wait = waitStream;
-
+exports.pipe = pipe;
