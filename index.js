@@ -24,6 +24,12 @@ function defaults(opts, fn, end) {
     return {opts: opts, fn: fn, end: end};
 }
 
+function nextTick() {
+    return new Promise(function(resolve, reject) {
+        process.nextTick(resolve);
+    });
+}
+
 //---------------------------------------
 // PromiseStream
 //---------------------------------------
@@ -47,8 +53,7 @@ function incoming(data, enc, done) {
     var processed = Promise.resolve([data, enc])
         .bind(this)
         .spread(this._fn)
-        .then(nothing) // to avoid keeping values.
-
+        .then(nothing);
     processed.catch(done);
     queue.push(processed);
     if (queue.length >= this._concurrent) {
@@ -56,7 +61,7 @@ function incoming(data, enc, done) {
         // node streams which forbid you to call done twice
         // at the same tick on the event loop, even if you
         // had events happening at the exact same tick
-        queue.shift().delay(1).done(done, done);
+        Promise.join(nextTick(), queue.shift(), nothing).done(done, done);
     }
     else {
         done();
