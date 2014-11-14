@@ -57,11 +57,13 @@ function incoming(data, enc, done) {
     processed.catch(done);
     queue.push(processed);
     if (queue.length >= this._concurrent) {
+        var next = queue.shift();
         // The delay is a workaround for the bad design of
         // node streams which forbid you to call done twice
         // at the same tick on the event loop, even if you
         // had events happening at the exact same tick
-        Promise.join(nextTick(), queue.shift(), nothing).done(done, done);
+        if (next.isResolved()) nextTick().done(done, done)
+        else next.done(done, done);
     }
     else {
         done();
