@@ -17,15 +17,14 @@ var Promise = require('bluebird'),
 Promise.promisifyAll(request);
 
 var download = url =>
-  request('http:' + url).pipe(
+  ps.wait(request('http:' + url).pipe(
     fs.createWriteStream(
-        'images/' + path.basename(url)));
+        'images/' + path.basename(url))));
 
 var downloadAllFrom = url =>
     request(url)
     .pipe(select('.post a img', el => el.attributes.SRC))
-    .pipe(ps.map({concurrent: 4}, imgurl =>
-        ps.wait(download(imgurl, url))))
+    .pipe(ps.map({concurrent: 4}, imgurl => download(imgurl, url)))
     .reduce((count, stream) => count + 1, 0);
 
 downloadAllFrom('http://imgur.com/').done(
