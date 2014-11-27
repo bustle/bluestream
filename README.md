@@ -22,15 +22,13 @@ var download = url =>
         'images/' + path.basename(url)));
 
 var downloadAllFrom = urls =>
-  Promise.all(urls.map(url =>
     request(url)
     .pipe(select('.post a img', el => el.attributes.SRC))
     .pipe(ps.map({concurrent: 4}, imgurl =>
         ps.wait(download(imgurl, url))))
-    .reduce((imagesPerUrl, stream) => imagesPerUrl + 1, 0)))
-  .reduce((total, imagesPerUrl) => total + imagesPerUrl);
+    .reduce((count, stream) => count + 1, 0);
 
-downloadAllFrom(['http://imgur.com/']).done(
+downloadAllFrom('http://imgur.com/').done(
     total => console.log(total, "images downloaded"),
     err   => console.error(err.stack))
 ```
