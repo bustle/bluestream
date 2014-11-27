@@ -21,7 +21,7 @@ var download = url =>
     fs.createWriteStream(
         'images/' + path.basename(url)));
 
-var downloadAllFrom = urls =>
+var downloadAllFrom = url =>
     request(url)
     .pipe(select('.post a img', el => el.attributes.SRC))
     .pipe(ps.map({concurrent: 4}, imgurl =>
