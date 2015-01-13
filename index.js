@@ -189,6 +189,18 @@ function waitStream(s) {
     });
 }
 
+function collect(s) {
+    var acc = [];
+    return pipe(s, exports.through(function(data) {
+        acc.push(data);
+    })).then(function() {
+        if (!acc.length) return new Buffer();
+        else if (typeof acc[0] === 'string')
+            return acc.join('');
+        else
+            return Buffer.concat(acc);
+    });
+}
 
 //---------------------------
 // pipe
@@ -215,6 +227,13 @@ function pipe(source, sink) {
 // pipeline
 //---------------------------
 
+function pipeline() {
+    var arr = [];
+    for (var k = 1; k < arguments.length; ++k) {
+        arr.push(pipe(arguments[k-1], arguments[k]));
+    }
+    return Promise.all(arr);
+}
 
 // API
 
@@ -223,3 +242,5 @@ exports.map = MapPromiseStream;
 exports.reduce = ReducePromiseStream;
 exports.wait = waitStream;
 exports.pipe = pipe;
+exports.pipeline = pipeline;
+exports.collect = collect;

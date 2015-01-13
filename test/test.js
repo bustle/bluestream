@@ -9,9 +9,12 @@ var t = require('blue-tape');
 
 
 function lines() {
-    return fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8')
-        .pipe(split())
+    return raw().pipe(split())
 }
+function raw() {
+    return fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8');
+}
+
 function delayer() {
     return ps.through(function(line) {
         return this.push(B.delay(1).then(function() {
@@ -60,3 +63,8 @@ t.test('combined', function(t) {
 
 });
 
+t.test('collect', function(t) {
+    return ps.collect(raw()).then(function(data) {
+        t.equal(data.length, 18, 'test.txt should be 18 bytes long');
+    });
+});
