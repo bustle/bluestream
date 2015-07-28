@@ -24,6 +24,7 @@ var download = url =>
 var downloadAllFrom = url =>
     request(url)
     .pipe(select('.post a img', el => el.attributes.SRC))
+    .pipe(ps.filter(url => /jpg$/.test(url.toLowerCase()))
     .pipe(ps.map({concurrent: 4}, imgurl => download(imgurl, url)))
     .reduce((count, stream) => count + 1, 0);
 
@@ -63,6 +64,15 @@ The other options are also passed to node's Transform stream constructor.
 
 Create a new MapPromiseStream. The function should return a promise for the
 next object that will be pushed to the stream.
+
+Options: Same as `ps.through`
+
+#### ps.filter
+
+`([opts:Options,] fn: (data[, enc]) => boolean) => FilterPromiseStream`
+
+Create a new FilterPromiseStream. The function should return a boolean to
+indicate whether the data value should pass to the next stream
 
 Options: Same as `ps.through`
 
@@ -109,6 +119,12 @@ to make it possible to use `return this.push(data)`
 `([opts:Options,] fn: (data[, enc]) => Promise) => MapPromiseStream`
 
 Create a new MapPromiseStream and pipes this promise stream to it.
+
+#### PromiseStream.prototype.filter
+
+`([opts:Options,] fn: (data[, enc]) => boolean) => FilterPromiseStream`
+
+Create a new FilterPromiseStream and pipes this promise stream to it.
 
 #### PromiseStream.prototype.reduce
 

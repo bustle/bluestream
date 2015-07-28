@@ -1,6 +1,7 @@
 var Promise = require('bluebird');
 var util = require('util');
 var Transform = require('stream').Transform;
+var Buffer = require('buffer').Buffer
 
 function nothing(x) { }
 function identity(x) { return x; }
@@ -101,12 +102,20 @@ function map(opts, fn, end) {
     return mstream;
 }
 
+PromiseStream.prototype.filter = filter;
+function filter(opts, fn) {
+    var fstream = exports.filter(opts, fn);
+    this.pipe(fstream);
+    return fstream;
+}
+
 PromiseStream.prototype.reduce = reduce;
 function reduce(opts, fn, initial) {
     var reducer = exports.reduce(opts, fn, initial);
     this.pipe(reducer);
     return reducer.promise();
 }
+
 
 PromiseStream.prototype.wait =
 PromiseStream.prototype.promise = promise;
@@ -129,6 +138,24 @@ function MapPromiseStream(opts, fn) {
 
 function mapStreamFn(el) {
     return this.push(this._mapfn(el));
+}
+
+//---------------------------------------
+// FilterPromiseStream
+//---------------------------------------
+
+util.inherits(FilterPromiseStream, PromiseStream);
+function FilterPromiseStream(opts, fn) {
+    if (!(this instanceof FilterPromiseStream))
+        return new FilterPromiseStream(opts, fn)
+    PromiseStream.call(this, opts, fn);
+    this._filterFn = this._fn;
+    this._fn = filterStreamFn;
+}
+
+function filterStreamFn(el) {
+    if (this._filterFn(el))
+        return this.push(el);
 }
 
 //---------------------------
@@ -239,6 +266,7 @@ function pipeline() {
 
 exports.through = PromiseStream;
 exports.map = MapPromiseStream;
+exports.filter = FilterPromiseStream
 exports.reduce = ReducePromiseStream;
 exports.wait = waitStream;
 exports.pipe = pipe;

@@ -54,11 +54,14 @@ t.test('combined', function(t) {
     .map(function(el) {
         return el * 2;
     })
+    .filter(function(el) {
+        return el > 4
+    })
     .reduce(function(acc, el) {
         return acc + el;
     })
     .then(function(sum) {
-        t.equal(sum, 90, 'should map-reduce to correct sum');
+        t.equal(sum, 84, 'should map-reduce to correct sum');
     });
 
 });
