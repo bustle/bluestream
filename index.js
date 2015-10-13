@@ -31,6 +31,12 @@ function nextTick() {
     });
 }
 
+function maybeResume(stream) {
+    if (typeof stream.resume === 'function') {
+        stream.resume();
+    }
+}
+
 //---------------------------------------
 // PromiseStream
 //---------------------------------------
@@ -120,6 +126,7 @@ function reduce(opts, fn, initial) {
 PromiseStream.prototype.wait =
 PromiseStream.prototype.promise = promise;
 function promise() {
+    this.resume()
     return this._streamEnd.promise;
 }
 
@@ -181,6 +188,7 @@ function ReducePromiseStream(opts, fn, initial) {
 ReducePromiseStream.prototype.wait =
 ReducePromiseStream.prototype.promise = reduceStreamPromise;
 function reduceStreamPromise() {
+    this.resume()
     return this._reduceResult.promise;
 }
 
@@ -212,7 +220,8 @@ function waitStream(s) {
     return new Promise(function(resolve, reject) {
         s.on('end', resolve);
         s.on('finish', resolve);
-        s.on('error', reject)
+        s.on('error', reject);
+        maybeResume(this)
     });
 }
 
@@ -243,6 +252,7 @@ function pipe(source, sink) {
             .on("error", reject)
             .pipe(sink)
             .on("error", reject);
+        maybeResume(sink)
     }).finally(function() {
         source.removeListener("end", resolve);
         source.removeListener("error", reject);

@@ -2,7 +2,7 @@
 var ps = require('../');
 var B = require('bluebird');
 var fs = require('fs');
-var split = require('split');
+var split = require('split2');
 var path = require('path');
 
 var t = require('blue-tape');
@@ -61,13 +61,13 @@ t.test('combined', function(t) {
         return acc + el;
     })
     .then(function(sum) {
-        t.equal(sum, 84, 'should map-reduce to correct sum');
+        t.equal(sum, 84 * 3, 'should map-reduce to correct sum');
     });
 
 });
 
 t.test('collect', function(t) {
     return ps.collect(raw()).then(function(data) {
-        t.equal(data.length, 18, 'test.txt should be 18 bytes long');
+        t.equal(data.length, 18 * 3, 'test.txt should be the correct size');
     });
 });
