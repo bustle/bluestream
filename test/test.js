@@ -7,7 +7,6 @@ var path = require('path');
 
 var t = require('blue-tape');
 
-
 function lines() {
     return raw().pipe(split())
 }
@@ -24,7 +23,7 @@ function delayer() {
 }
 
 
-t.test('ps.wait', function(t) {
+t.test('ps.wait(ps.map(..))', function(t) {
     var last = 0;
     return ps.wait(lines().pipe(ps.map(function(el) {
         return B.delay(1).then(function() {
@@ -36,7 +35,7 @@ t.test('ps.wait', function(t) {
     });
 });
 
-t.test('map-wait', function(t) {
+t.test('ps.map(..).wait', function(t) {
     var last = 0;
     return lines().pipe(delayer())
     .map(function(el) {
@@ -49,7 +48,7 @@ t.test('map-wait', function(t) {
 });
 
 
-t.test('combined', function(t) {
+t.test('delayer().map(..).filter(..).reduce(..).then(..)', function(t) {
     return lines().pipe(delayer())
     .map(function(el) {
         return el * 2;
