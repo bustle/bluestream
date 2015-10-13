@@ -19,5 +19,6 @@
   "devDependencies": {
     "blue-tape": "^0.1.10",
     "split2": "^1.0.0"
-  }
+  },
+  "engines" : { "node" : ">=0.12" }
 }
