@@ -35,6 +35,7 @@ function maybeResume(stream) {
     if (typeof stream.resume === 'function') {
         stream.resume();
     }
+    return stream;
 }
 
 //---------------------------------------
@@ -50,6 +51,7 @@ function PromiseStream(opts, fn, end) {
     this._fn = args.fn;
     this._end = args.end;
     this._streamEnd = defer();
+    this._handlingErrors = false;
     this._concurrent = Math.max(1, args.opts.concurrent || 1);
     this._queue = [];
 }
@@ -96,9 +98,14 @@ PromiseStream.prototype._finishUp = function() {
 
 PromiseStream.prototype.push = push;
 function push(data) {
-    return Promise.cast(data)
+    return Promise.resolve(data)
     .bind(this)
-    .then(Transform.prototype.push);
+    .then(Transform.prototype.push, this.emitError);
+}
+
+PromiseStream.prototype.emitError = emitError;
+function emitError(e) {
+    this.emit('error', e)
 }
 
 PromiseStream.prototype.map = map;
@@ -126,8 +133,11 @@ function reduce(opts, fn, initial) {
 PromiseStream.prototype.wait =
 PromiseStream.prototype.promise = promise;
 function promise() {
-    maybeResume(this)
-    return this._streamEnd.promise;
+    if (!this._handlingErrors) {
+        this._handlingErrors = true;
+        this.on('error', this._streamEnd.reject);
+    }
+    return maybeResume(this)._streamEnd.promise
 }
 
 //---------------------------------------
@@ -188,8 +198,7 @@ function ReducePromiseStream(opts, fn, initial) {
 ReducePromiseStream.prototype.wait =
 ReducePromiseStream.prototype.promise = reduceStreamPromise;
 function reduceStreamPromise() {
-    maybeResume(this)
-    return this._reduceResult.promise;
+    return maybeResume(this)._reduceResult.promise
 }
 
 
@@ -227,9 +236,9 @@ function waitStream(s) {
 
 function collect(s) {
     var acc = [];
-    return pipe(s, exports.through(function(data) {
+    return pipe(s, maybeResume(exports.through(function(data) {
         acc.push(data);
-    })).then(function() {
+    }))).then(function() {
         if (!acc.length) return new Buffer();
         else if (typeof acc[0] === 'string')
             return acc.join('');
@@ -252,7 +261,6 @@ function pipe(source, sink) {
             .on("error", reject)
             .pipe(sink)
             .on("error", reject);
-        maybeResume(sink)
     }).finally(function() {
         source.removeListener("end", resolve);
         source.removeListener("error", reject);

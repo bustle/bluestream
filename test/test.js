@@ -70,3 +70,14 @@ t.test('collect', function(t) {
         t.equal(data.length, 18 * 3, 'test.txt should be the correct size');
     });
 });
+
+
+t.test('error', function(t) {
+    return lines().pipe(ps.map(function(el) {
+        return B.reject(new Error("Oops"))
+    })).wait().then(function(val) {
+        t.ok(false, "should not execute")
+    }, function(e) {
+        t.ok(e, "should be rejected")
+    });
+})

@@ -140,7 +140,8 @@ Returns a promise for the final reduction result
 
 `() => Promise`
 
-Returns a promise fulfilled at the end of the stream.
+Returns a promise fulfilled at the end of the stream, rejected if any errors
+events are emitted by the stream.
 
 For ReducePromiseStreams, the promise is for the final reduction result. Any
 stream errors or exceptions encountered while reducing will result with a
