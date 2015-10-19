@@ -1,6 +1,6 @@
 {
   "name": "promise-streams",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "A collection of streams that work well with promises (through, map, reduce)",
   "main": "index.js",
   "scripts": {
