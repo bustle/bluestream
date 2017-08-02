@@ -4,6 +4,10 @@
 
 A collection of streams that work well with promises (through, map, reduce) forked from [promise-streams](https://github.com/spion/promise-streams) with some new features.
 
+- `PromiseReadStream`
+- `.collect()` supports object mode
+- `.pipe()` resolves when the target stream finishes
+
 # example
 
 Using ES6 arrow functions:
