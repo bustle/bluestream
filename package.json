@@ -1,23 +1,27 @@
 {
-  "name": "promise-streams",
-  "version": "2.0.0",
+  "name": "bluestream",
+  "version": "3.0.0",
   "description": "A collection of streams that work well with promises (through, map, reduce)",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "keywords": [
     "through",
     "promise",
-    "stream"
+    "stream",
+    "readable",
+    "bluebird"
   ],
-  "author": "spion",
+  "author": "reconbot",
   "license": "MIT",
   "dependencies": {
-    "bluebird": "^2.10.2"
+    "bluebird": "^3.5.0"
   },
   "devDependencies": {
     "blue-tape": "^0.1.10",
+    "chai": "^4.1.0",
+    "mocha": "^3.5.0",
     "split2": "^1.0.0"
   },
   "engines": {

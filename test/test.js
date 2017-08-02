@@ -1,83 +1,118 @@
 
-var ps = require('../');
-var B = require('bluebird');
-var fs = require('fs');
-var split = require('split2');
-var path = require('path');
-
-var t = require('blue-tape');
+const fs = require('fs');
+const path = require('path');
+const Promise = require('bluebird');
+const split = require('split2');
+const Readable = require('stream').Readable
+const assert = require('chai').assert
+const ps = require('../');
 
 function lines() {
-    return raw().pipe(split())
+  return raw().pipe(split())
 }
 function raw() {
-    return fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8');
+  return fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8');
+}
+
+function objects() {
+  const arr = [1, 2, 3, 4, 5, 6];
+  return new Readable({ objectMode: true, read() {
+    this.push(arr.shift() || null)
+  }})
 }
 
 function delayer() {
-    return ps.through(function(line) {
-        return this.push(B.delay(1).then(function() {
-            return line ? parseFloat(line) : null;
-        }));
-    });
+  return ps.through(function(line) {
+    return this.push(Promise.delay(1).then(function() {
+      return line ? parseFloat(line) : null;
+    }));
+  });
 }
 
+describe('bluestream', () => {
+  describe('.read', () => {
+    it('reads', async () => {
+      const arr = [1, 2, 3]
+      let read = ps.read(function () {
+        this.push(arr.shift() || null)
+      })
+      let sum = 0
+      read.on('data', data => {
+        sum += data
+      })
+      await ps.wait(read)
+      assert.equal(sum, 6)
+    })
+  })
 
-t.test('ps.wait(ps.map(..))', function(t) {
-    var last = 0;
-    return ps.wait(lines().pipe(ps.map(function(el) {
-        return B.delay(1).then(function() {
-            if (el) last = el;
-            return el;
-        });
-    }))).then(function() {
-        t.equal(last, "9", 'should wait for the last element')
-    });
-});
+  describe('wait', () => {
+    it('ps.wait', async () => {
+      var last = 0;
+      await ps.wait(lines().pipe(ps.map(async function(el) {
+        await Promise.delay(1)
+        if (el) { last = el }
+        return el
+      })))
+      assert.equal(last, "9", 'should wait for the last element')
+    })
 
-t.test('ps.map(..).wait', function(t) {
-    var last = 0;
-    return lines().pipe(delayer())
-    .map(function(el) {
-        return B.delay(1).then(function() {
+    it('map().wait', async () => {
+      var last = 0;
+      await lines().pipe(delayer())
+        .map(function(el) {
+          return Promise.delay(1).then(function() {
             return (last = el);
-        })
-    }).wait().then(function() {
-        t.equal(last, 9, 'should wait for the last element')
-    });
-});
+          })
+        }).wait();
+      assert.equal(last, 9, 'should wait for the last element')
+    })
+  })
 
-
-t.test('delayer().map(..).filter(..).reduce(..).then(..)', function(t) {
-    return lines().pipe(delayer())
-    .map(function(el) {
+  describe('map reduce', () => {
+    it('delayer().map(..).filter(..).reduce(..).then(..)', function() {
+      return lines().pipe(delayer())
+      .map(function(el) {
         return el * 2;
-    })
-    .filter(function(el) {
+      })
+      .filter(function(el) {
         return el > 4
-    })
-    .reduce(function(acc, el) {
+      })
+      .reduce(function(acc, el) {
         return acc + el;
+      })
+      .then(function(sum) {
+        assert.equal(sum, 84 * 3, 'should map-reduce to correct sum');
+      });
+    });
+  })
+
+  describe('collect', () => {
+    it('collect()', function() {
+      return ps.collect(raw()).then(function(data) {
+        assert.equal(data.length, 18 * 3, 'test.txt should be the correct size');
+      });
+    });
+  })
+
+  describe('collect', () => {
+    it('collect(objects)', function() {
+      return ps.collect(objects()).then(function(data) {
+        assert.equal(data.length, 6, 'array of objects should be the correct size');
+        assert.deepEqual(data, [1, 2, 3, 4, 5, 6]);
+      });
+    });
+  })
+
+  describe('error', () => {
+    it('error', function() {
+      return lines().pipe(ps.map(function(el) {
+        return Promise.reject(new Error("Oops"))
+      })).wait().then(function(val) {
+        assert.ok(false, "should not execute")
+      }, function(e) {
+        assert.ok(e, "should be rejected")
+      });
     })
-    .then(function(sum) {
-        t.equal(sum, 84 * 3, 'should map-reduce to correct sum');
-    });
-
-});
-
-t.test('collect', function(t) {
-    return ps.collect(raw()).then(function(data) {
-        t.equal(data.length, 18 * 3, 'test.txt should be the correct size');
-    });
-});
-
-
-t.test('error', function(t) {
-    return lines().pipe(ps.map(function(el) {
-        return B.reject(new Error("Oops"))
-    })).wait().then(function(val) {
-        t.ok(false, "should not execute")
-    }, function(e) {
-        t.ok(e, "should be rejected")
-    });
+  })
 })
+

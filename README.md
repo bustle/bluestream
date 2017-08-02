@@ -1,6 +1,8 @@
-# promise-streams
+# bluestream
 
-A collection of streams that work well with promises (through, map, reduce)
+[![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream)
+
+A collection of streams that work well with promises (through, map, reduce) forked from [promise-streams](https://github.com/spion/promise-streams) with some new features.
 
 # example
 
@@ -106,7 +108,29 @@ Wait for the stream to end. Also captures errors.
 `(source: Stream, destination: Stream) => Promise`
 
 Pipes s1 to s2 and forwards all errors to the resulting promise. The promise is
-fulfilled without a value when the source stream ends.
+fulfilled without a value when the destination stream ends.
+
+#### ps.collect
+
+`(source: Stream) => Promise`
+
+Returns a Buffer, string or array of all the data events concatenated together. If no events null is returned.
+
+#### ps.read
+
+`([opts:Options,] fn:(bytesWanted) => Promise)) => PromiseReadStream`
+
+Create a read-promise stream. Pass it a function that takes the number of bytes or objects of wanted data and and uses `this.push` or `return` to push values or promises. This function should
+return a promise that indicates when the object/chunk are fully processed. Return `null` to end the stream.
+
+Returns a PromiseStream.
+
+Options:
+  * `objectMode` - true or false
+  * all other `Readable` stream options
+
+The other options are also passed to node's Read stream constructor.
+
 
 #### PromiseStream.prototype.push
 
