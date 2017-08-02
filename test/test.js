@@ -31,8 +31,8 @@ function delayer () {
 }
 
 describe('bluestream', () => {
-  describe('.read', () => {
-    it('reads', async () => {
+  describe('PromiseReadStream', () => {
+    it('works with .push', async () => {
       const arr = [1, 2, 3]
       let read = ps.read(function () {
         this.push(arr.shift() || null)
@@ -43,6 +43,54 @@ describe('bluestream', () => {
       })
       await ps.wait(read)
       assert.equal(sum, 6)
+    })
+
+    it('works with .push of a promise', async () => {
+      const arr = [1, 2, 3]
+      let read = ps.read(function () {
+        this.push(Promise.resolve(arr.shift() || null))
+      })
+      let sum = 0
+      read.on('data', data => {
+        sum += data
+      })
+      await ps.wait(read)
+      assert.equal(sum, 6)
+    })
+
+    it('pushes a promise return', async () => {
+      const arr = [1, 2, 3]
+      let read = ps.read(async function () {
+        return arr.shift() || null
+      })
+      let sum = 0
+      read.on('data', data => {
+        sum += data
+      })
+      await ps.wait(read)
+      assert.equal(sum, 6)
+    })
+
+   it('pushes a return value', async () => {
+      const arr = [1, 2, 3]
+      let read = ps.read(function () {
+        return arr.shift() || null
+      })
+      let sum = 0
+      read.on('data', data => {
+        sum += data
+      })
+      await ps.wait(read)
+      assert.equal(sum, 6)
+    })
+
+    it('#promise()', async () => {
+      const arr = [1, 2, 3]
+      let read = ps.read(function () {
+        return arr.shift() || null
+      })
+      await read.promise()
+      assert.equal(arr.length, 0)
     })
   })
 

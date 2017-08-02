@@ -10,8 +10,9 @@ function identity (x) { return x }
 
 function defer () {
   var resolve, reject
-  var promise = new Promise(function (cb, eb) {
-    resolve = cb; reject = eb
+  var promise = new Promise(function (resolveCb, rejectCb) {
+    resolve = resolveCb
+    reject = rejectCb
   })
   return { resolve: resolve, reject: reject, promise: promise }
 }
@@ -109,21 +110,21 @@ function emitError (e) {
 
 PromiseStream.prototype.map = map
 function map (opts, fn, end) {
-  var mstream = exports.map(opts, fn)
+  var mstream = new MapPromiseStream(opts, fn)
   this.pipe(mstream)
   return mstream
 }
 
 PromiseStream.prototype.filter = filter
 function filter (opts, fn) {
-  var fstream = exports.filter(opts, fn)
+  var fstream = new FilterPromiseStream(opts, fn)
   this.pipe(fstream)
   return fstream
 }
 
 PromiseStream.prototype.reduce = reduce
 function reduce (opts, fn, initial) {
-  var reducer = exports.reduce(opts, fn, initial)
+  var reducer = new ReducePromiseStream(opts, fn, initial)
   this.pipe(reducer)
   return reducer.promise()
 }
@@ -150,6 +151,8 @@ function PromiseReadStream (opts, fn, end) {
   }
   var args = defaults(opts, fn, end)
   ReadableStream.call(this, args.opts)
+  this._streamEnd = defer()
+  this.on('end', this._finishUp)
   this._fn = args.fn
   this._reading = false
 }
@@ -180,6 +183,19 @@ PromiseReadStream.prototype._read = function (bytes) {
 PromiseReadStream.prototype.emitError = function (e) {
   this.emit('error', e)
 }
+
+PromiseReadStream.prototype._finishUp = function () {
+  this._streamEnd.resolve()
+}
+
+PromiseReadStream.prototype.promise = function () {
+  if (!this._handlingErrors) {
+    this._handlingErrors = true
+    this.on('error', this._streamEnd.reject)
+  }
+  return maybeResume(this)._streamEnd.promise
+}
+
 
 // ---------------------------------------
 // MapPromiseStream
@@ -272,7 +288,7 @@ function waitStream (s) {
 
 function collect (s) {
   var acc = []
-  return pipe(s, maybeResume(exports.through(function (data) {
+  return pipe(s, maybeResume(PromiseStream(function (data) {
     acc.push(data)
   }))).then(function () {
     if (!acc.length) {
