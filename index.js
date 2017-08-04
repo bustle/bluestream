@@ -9,12 +9,12 @@ function nothing (x) { }
 function identity (x) { return x }
 
 function defer () {
-  var resolve, reject
-  var promise = new Promise(function (resolveCb, rejectCb) {
-    resolve = resolveCb
-    reject = rejectCb
+  var resolveCb, rejectCb
+  var promise = new Promise(function (resolve, reject) {
+    resolveCb = resolve
+    rejectCb = reject
   })
-  return { resolve: resolve, reject: reject, promise: promise }
+  return { resolve: resolveCb, reject: rejectCb, promise: promise }
 }
 
 function defaults (opts, fn, end) {
@@ -40,12 +40,12 @@ function maybeResume (stream) {
 }
 
 // ---------------------------------------
-// PromiseStream
+// PromiseTransformStream
 // ---------------------------------------
 
-util.inherits(PromiseStream, Transform)
-function PromiseStream (opts, fn, end) {
-  if (!(this instanceof PromiseStream)) { return new PromiseStream(opts, fn, end) }
+util.inherits(PromiseTransformStream, Transform)
+function PromiseTransformStream (opts, fn, end) {
+  if (!(this instanceof PromiseTransformStream)) { return new PromiseTransformStream(opts, fn, end) }
   var args = defaults(opts, fn, end)
   Transform.call(this, args.opts)
   this._fn = args.fn
@@ -56,7 +56,7 @@ function PromiseStream (opts, fn, end) {
   this._queue = []
 }
 
-PromiseStream.prototype._transform = incoming
+PromiseTransformStream.prototype._transform = incoming
 function incoming (data, enc, done) {
   var queue = this._queue
   var processed = Promise.resolve([data, enc])
@@ -81,56 +81,56 @@ function incoming (data, enc, done) {
   }
 }
 
-PromiseStream.prototype._flush = complete
+PromiseTransformStream.prototype._flush = complete
 function complete (done) {
   if (!this._end) { this._end = nothing }
   Promise.all(this._queue)
-  .then(nothing)
-  .bind(this)
-  .then(this._end)
-  .then(this._finishUp)
-  .done(done, done)
+    .then(nothing)
+    .bind(this)
+    .then(this._end)
+    .then(this._finishUp)
+    .done(done, done)
 }
 
-PromiseStream.prototype._finishUp = function () {
+PromiseTransformStream.prototype._finishUp = function () {
   this._streamEnd.resolve()
 }
 
-PromiseStream.prototype.push = push
+PromiseTransformStream.prototype.push = push
 function push (data) {
   return Promise.resolve(data)
-  .bind(this)
-  .then(Transform.prototype.push, this.emitError)
+    .bind(this)
+    .then(Transform.prototype.push, this.emitError)
 }
 
-PromiseStream.prototype.emitError = emitError
+PromiseTransformStream.prototype.emitError = emitError
 function emitError (e) {
   this.emit('error', e)
 }
 
-PromiseStream.prototype.map = map
+PromiseTransformStream.prototype.map = map
 function map (opts, fn, end) {
-  var mstream = new MapPromiseStream(opts, fn)
+  var mstream = new MapPromiseTransformStream(opts, fn)
   this.pipe(mstream)
   return mstream
 }
 
-PromiseStream.prototype.filter = filter
+PromiseTransformStream.prototype.filter = filter
 function filter (opts, fn) {
-  var fstream = new FilterPromiseStream(opts, fn)
+  var fstream = new FilterPromiseTransformStream(opts, fn)
   this.pipe(fstream)
   return fstream
 }
 
-PromiseStream.prototype.reduce = reduce
+PromiseTransformStream.prototype.reduce = reduce
 function reduce (opts, fn, initial) {
-  var reducer = new ReducePromiseStream(opts, fn, initial)
+  var reducer = new ReducePromiseTransformStream(opts, fn, initial)
   this.pipe(reducer)
   return reducer.promise()
 }
 
-PromiseStream.prototype.wait =
-PromiseStream.prototype.promise = promise
+PromiseTransformStream.prototype.wait =
+PromiseTransformStream.prototype.promise = promise
 function promise () {
   if (!this._handlingErrors) {
     this._handlingErrors = true
@@ -143,68 +143,81 @@ function promise () {
 // PromiseReadStream
 // ---------------------------------------
 
-PromiseReadStream
-util.inherits(PromiseReadStream, ReadableStream)
-function PromiseReadStream (opts, fn, end) {
-  if (!(this instanceof PromiseReadStream)) {
-    return new PromiseReadStream(opts, fn, end)
-  }
-  var args = defaults(opts, fn, end)
-  ReadableStream.call(this, args.opts)
-  this._streamEnd = defer()
-  this.on('end', this._finishUp)
-  this._fn = args.fn
-  this._reading = false
-}
+class PromiseReadStream extends ReadableStream {
+  constructor (opts, readCb) {
+    if (typeof opts === 'function') {
+      readCb = opts
+      opts = { objectMode: true }
+    }
+    if (typeof readCb === 'function') {
+      opts.read = readCb
+    }
 
-PromiseReadStream.prototype.push = function (data) {
-  return Promise.resolve(data)
-  .bind(this)
-  .then(ReadableStream.prototype.push, this.emitError)
-}
-
-PromiseReadStream.prototype._read = function (bytes) {
-  if (this._reading) {
-    return
+    super(opts)
+    this._handlingErrors = false
+    this._reading = false
+    this._keepReading = false
+    this._streamEnd = defer()
+    this.wrapRead()
+    this.once('end', this._finishUp)
   }
-  this._reading = true
-  Promise.resolve(this._fn(bytes))
-    .then(data => {
-      this._reading = false
-      if (data !== undefined) {
-        this.push(data)
+
+  wrapRead () {
+    const readCb = this._read
+    this._read = (bytes) => {
+      this._keepReading = true
+      if (this._reading) {
+        return
       }
-      if (!this._readableState.ended) {
-        this._read()
-      }
-    }, this.emitError)
-}
-
-PromiseReadStream.prototype.emitError = function (e) {
-  this.emit('error', e)
-}
-
-PromiseReadStream.prototype._finishUp = function () {
-  this._streamEnd.resolve()
-}
-
-PromiseReadStream.prototype.promise = function () {
-  if (!this._handlingErrors) {
-    this._handlingErrors = true
-    this.on('error', this._streamEnd.reject)
+      this._reading = true
+      Promise.resolve()
+        .then(() => readCb.call(this, bytes))
+        .then(data => {
+          this._reading = null
+          if (data !== undefined) {
+            this.push(data)
+          }
+          if (this._keepReading) {
+            this._read()
+          }
+        }, this.emitError)
+    }
   }
-  return maybeResume(this)._streamEnd.promise
-}
 
+  push (data) {
+    return Promise.resolve(data)
+      .then(data => {
+        this._keepReading = super.push(data)
+      }, err => {
+        this.emitError(err)
+      })
+  }
+
+  emitError (e) {
+    this.emit('error', e)
+  }
+
+  _finishUp () {
+    this._streamEnd.resolve()
+  }
+
+  promise () {
+    if (!this._handlingErrors) {
+      this._handlingErrors = true
+      this.once('error', this._streamEnd.reject)
+    }
+    return maybeResume(this)._streamEnd.promise
+  }
+}
 
 // ---------------------------------------
-// MapPromiseStream
+// MapPromiseTransformStream
 // ---------------------------------------
 
-util.inherits(MapPromiseStream, PromiseStream)
-function MapPromiseStream (opts, fn) {
-  if (!(this instanceof MapPromiseStream)) { return new MapPromiseStream(opts, fn) }
-  PromiseStream.call(this, opts, fn)
+util.inherits(MapPromiseTransformStream, PromiseTransformStream)
+function MapPromiseTransformStream (opts, fn) {
+  if (!(this instanceof MapPromiseTransformStream)) { return new MapPromiseTransformStream(opts, fn) }
+  PromiseTransformStream.call(this, opts, fn)
   this._mapfn = this._fn
   this._fn = mapStreamFn
 }
@@ -214,13 +227,13 @@ function mapStreamFn (el) {
 }
 
 // ---------------------------------------
-// FilterPromiseStream
+// FilterPromiseTransformStream
 // ---------------------------------------
 
-util.inherits(FilterPromiseStream, PromiseStream)
-function FilterPromiseStream (opts, fn) {
-  if (!(this instanceof FilterPromiseStream)) { return new FilterPromiseStream(opts, fn) }
-  PromiseStream.call(this, opts, fn)
+util.inherits(FilterPromiseTransformStream, PromiseTransformStream)
+function FilterPromiseTransformStream (opts, fn) {
+  if (!(this instanceof FilterPromiseTransformStream)) { return new FilterPromiseTransformStream(opts, fn) }
+  PromiseTransformStream.call(this, opts, fn)
   this._filterFn = this._fn
   this._fn = filterStreamFn
 }
@@ -230,13 +243,13 @@ function filterStreamFn (el) {
 }
 
 // ---------------------------
-// ReducePromiseStream
+// ReducePromiseTransformStream
 // ---------------------------
 
-util.inherits(ReducePromiseStream, PromiseStream)
-function ReducePromiseStream (opts, fn, initial) {
-  if (!(this instanceof ReducePromiseStream)) { return new ReducePromiseStream(opts, fn, initial) }
-  PromiseStream.call(this, opts, fn)
+util.inherits(ReducePromiseTransformStream, PromiseTransformStream)
+function ReducePromiseTransformStream (opts, fn, initial) {
+  if (!(this instanceof ReducePromiseTransformStream)) { return new ReducePromiseTransformStream(opts, fn, initial) }
+  PromiseTransformStream.call(this, opts, fn)
   this._reducefn = this._fn
   this._reduceResult = defer()
   this._initial = this._end
@@ -248,19 +261,19 @@ function ReducePromiseStream (opts, fn, initial) {
   this.on('error', this._reduceResult.reject)
 }
 
-ReducePromiseStream.prototype.wait =
-ReducePromiseStream.prototype.promise = reduceStreamPromise
+ReducePromiseTransformStream.prototype.wait =
+ReducePromiseTransformStream.prototype.promise = reduceStreamPromise
 function reduceStreamPromise () {
   return maybeResume(this)._reduceResult.promise
 }
 
 function reduceStreamFn (el, enc) {
-  var initial = this._initial,
-    acc = this._acc
+  var initial = this._initial
+  var acc = this._acc
   if (acc === null) {
     acc = typeof (initial) !== 'undefined'
-    ? Promise.cast(initial)
-    : Promise.cast(el)
+      ? Promise.cast(initial)
+      : Promise.cast(el)
   } else {
     acc = Promise.join(acc, el, enc).spread(this._reducefn)
   }
@@ -270,7 +283,7 @@ function reduceStreamFn (el, enc) {
 
 function reduceStreamEnd () {
   return Promise.resolve(this._acc)
-  .then(this._reduceResult.resolve)
+    .then(this._reduceResult.resolve)
 }
 
 // ---------------------------
@@ -288,7 +301,7 @@ function waitStream (s) {
 
 function collect (s) {
   var acc = []
-  return pipe(s, maybeResume(PromiseStream(function (data) {
+  return pipe(s, maybeResume(PromiseTransformStream(function (data) {
     acc.push(data)
   }))).then(function () {
     if (!acc.length) {
@@ -309,20 +322,20 @@ function collect (s) {
 // ---------------------------
 
 function pipe (source, sink) {
-  var resolve, reject
-  return new Promise(function (resolve_, reject_) {
-    resolve = resolve_
-    reject = reject_
+  var _resolve, _reject
+  return new Promise(function (resolve, reject) {
+    _resolve = resolve
+    _reject = reject
     source
-    .on('error', reject)
-    .pipe(sink)
-    .on('error', reject)
-    .on('finish', resolve)
-    .on('end', resolve)
+      .on('error', reject)
+      .pipe(sink)
+      .on('error', reject)
+      .on('finish', resolve)
+      .on('end', resolve)
   }).finally(function () {
-    source.removeListener('end', resolve)
-    source.removeListener('error', reject)
-    sink.removeListener('error', reject)
+    source.removeListener('end', _resolve)
+    source.removeListener('error', _reject)
+    sink.removeListener('error', _reject)
   })
 }
 
@@ -339,12 +352,13 @@ function pipeline () {
 }
 
 // API
-
-exports.read = PromiseReadStream
-exports.through = PromiseStream
-exports.map = MapPromiseStream
-exports.filter = FilterPromiseStream
-exports.reduce = ReducePromiseStream
+exports.PromiseReadStream = PromiseReadStream
+exports.read = (opts, readFn) => new PromiseReadStream(opts, readFn)
+exports.PromiseTransformStream = PromiseTransformStream
+exports.through = (opts, fn, end) => new PromiseTransformStream(opts, fn, end)
+exports.map = MapPromiseTransformStream
+exports.filter = FilterPromiseTransformStream
+exports.reduce = ReducePromiseTransformStream
 exports.wait = waitStream
 exports.pipe = pipe
 exports.pipeline = pipeline

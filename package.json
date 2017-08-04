@@ -4,7 +4,8 @@
   "description": "A collection of streams that work well with promises (through, map, reduce)",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "npm run lint && mocha",
+    "lint": "eslint ./"
   },
   "keywords": [
     "through",
@@ -21,10 +22,42 @@
   "devDependencies": {
     "blue-tape": "^0.1.10",
     "chai": "^4.1.0",
+    "eslint": "^4.3.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-mocha": "^4.11.0",
+    "eslint-plugin-node": "^5.1.1",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1",
     "mocha": "^3.5.0",
     "split2": "^1.0.0"
   },
   "engines": {
     "node": ">=0.12"
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "mocha": true
+    },
+    "globals": {
+      "assert": false
+    },
+    "extends": [
+      "standard"
+    ],
+    "plugins": [
+      "mocha"
+    ],
+    "rules": {
+      "curly": [
+        "error",
+        "all"
+      ],
+      "no-console": "error",
+      "mocha/no-skipped-tests": "error",
+      "mocha/no-exclusive-tests": "error",
+      "no-return-await": "error"
+    }
   }
 }
