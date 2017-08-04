@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream)
 
-A collection of streams that work well with promises (through, map, reduce) forked from [promise-streams](https://github.com/spion/promise-streams) with some new features.
+A collection of streams and stream utilities that work well with promises (through, map, reduce) forked from [promise-streams](https://github.com/spion/promise-streams) with some new features.
 
 - `PromiseReadStream`
 - `.collect()` supports object mode
@@ -17,21 +17,21 @@ var Promise = require('bluebird'),
     request = require('request'),
     path = require('path'),
     fs = require('fs'),
-    ps = require('promise-streams'),
+    bstream = require('bluestream'),
     select = require('./select-elements');
 
 Promise.promisifyAll(request);
 
 var download = url =>
-  ps.wait(request('http:' + url).pipe(
+  bstream.wait(request('http:' + url).pipe(
     fs.createWriteStream(
         'images/' + path.basename(url))));
 
 var downloadAllFrom = url =>
     request(url)
     .pipe(select('.post a img', el => el.attributes.SRC))
-    .pipe(ps.filter(url => /jpg$/.test(url.toLowerCase()))
-    .pipe(ps.map({concurrent: 4}, imgurl => download(imgurl, url)))
+    .pipe(bstream.filter(url => /jpg$/.test(url.toLowerCase()))
+    .pipe(bstream.map({concurrent: 4}, imgurl => download(imgurl, url)))
     .reduce((count, stream) => count + 1, 0);
 
 downloadAllFrom('http://imgur.com/').done(
@@ -42,9 +42,51 @@ downloadAllFrom('http://imgur.com/').done(
 
 # api
 
+#### ps.read
+
+`([opts:Options,] fn:(bytesWanted) => Promise)) => PromiseReadStream`
+
+#### PromiseReadStream
+
+A `PromiseReadStream` works like a normal `ReadableStream` but the `_read` and `push()` methods have some notable differences. (The `_read` method can be provided as the only argument, in a `read` key on the options, or as the `_read` method if you extend `PromiseReadStream`.) Object mode is the default.
+
+`_read(bytesWanted)`
+- Is async function friendly, a rejection/throw will be handled as an error event
+- Is called again only after it returns or resolves regardless of how many times you call `.push`
+- Is called again if you don't push (To aid in controll flow)
+- Pushes any non `undefined` return values
+
+`this.push()`
+- Can be pushed a promise
+- Returns a promise
+
+
+This allows you to use it in some friendly ways.
+
+```js
+// readable stream from an array
+const list = [1, 2, 3]
+const listStream = bstream.read(() => list.shift() || null)
+
+// readable stream from redis scans
+import Redis from 'io-redis'
+var redis = new Redis()
+let cursor = 0
+
+const hscanStream = bstream.read(async () => {
+  const [newCursor, keys] = await redis.scan('cursor', cursor)
+  keys.map(key => this.push(key))
+  if (newCursor === '0') {
+    this.push(null)
+  }
+  cursor = newCursor
+})
+
+```
+
 #### ps.through
 
-`([opts:Options,] fn:(data[, enc]) => Promise)) => PromiseStream`
+`([opts:Options,] fn:(data[, enc]) => Promise)) => PromiseThroughStream`
 
 Create a through-promise stream. Pass it a function that takes data and
 encoding and uses `this.push` to push values or promises. This function should
