@@ -5,7 +5,7 @@ const Promise = require('bluebird')
 const split = require('split2')
 const Readable = require('stream').Readable
 const assert = require('chai').assert
-const ps = require('../')
+const bstream = require('../')
 
 function lines () {
   return raw().pipe(split())
@@ -18,93 +18,99 @@ function objects () {
   const arr = [1, 2, 3, 4, 5, 6]
   return new Readable({ objectMode: true,
     read () {
-      this.push(arr.shift() || null)
+      const value = arr.shift()
+      this.push(value ? { value } : null)
     }})
 }
 
-function delayer () {
-  return ps.through(function (line) {
-    return this.push(Promise.delay(1).then(function () {
-      return line ? parseFloat(line) : null
-    }))
+function nextTick () {
+  return new Promise(function (resolve, reject) {
+    process.nextTick(resolve)
   })
 }
 
 describe('bluestream', () => {
   describe('PromiseReadStream', () => {
-    it('ps.read constructs', async () => {
-      const read = ps.read(() => {})
-      assert.instanceOf(read, ps.PromiseReadStream)
+    describe('constructors', () => {
+      it('bstream.read()', async () => {
+        const read = bstream.read(() => {})
+        assert.instanceOf(read, bstream.PromiseReadStream)
+      })
+
+      it('new PromiseReadStream()', async () => {
+        const read = new bstream.PromiseReadStream(() => {})
+        assert.instanceOf(read, bstream.PromiseReadStream)
+      })
     })
 
     it('works with .push', async () => {
       const arr = [1, 2, 3, null]
-      let read = ps.read(function () {
+      let read = bstream.read(function () {
         this.push(arr.shift())
       })
       let sum = 0
       read.on('data', data => {
         sum += data
       })
-      await ps.wait(read)
+      await bstream.wait(read)
       assert.equal(sum, 6)
     })
 
     it('works with .push of a promise', async () => {
       const arr = [1, 2, 3, null]
-      let read = ps.read(function () {
+      let read = bstream.read(function () {
         this.push(Promise.resolve(arr.shift()))
       })
       let sum = 0
       read.on('data', data => {
         sum += data
       })
-      await ps.wait(read)
-      assert.equal(sum, 6)
-    })
-
-    it('pushes a promise return', async () => {
-      const arr = [1, 2, 3, null]
-      let read = ps.read(async function () {
-        return arr.shift()
-      })
-      let sum = 0
-      read.on('data', data => {
-        sum += data
-      })
-      await ps.wait(read)
+      await bstream.wait(read)
       assert.equal(sum, 6)
     })
 
     it('pushes a return value', async () => {
       const arr = [1, 2, 3, null]
-      let read = ps.read(function () {
+      let read = bstream.read(function () {
         return arr.shift()
       })
       let sum = 0
       read.on('data', data => {
         sum += data
       })
-      await ps.wait(read)
+      await bstream.wait(read)
+      assert.equal(sum, 6)
+    })
+
+    it('pushes a promise return', async () => {
+      const arr = [1, 2, 3, null]
+      let read = bstream.read(async function () {
+        return arr.shift()
+      })
+      let sum = 0
+      read.on('data', data => {
+        sum += data
+      })
+      await bstream.wait(read)
       assert.equal(sum, 6)
     })
 
     it('allows not returning a value', async () => {
       const arr = [1, 2, undefined, 3, null]
-      let read = ps.read(function () {
+      let read = bstream.read(function () {
         return arr.shift()
       })
       let sum = 0
       read.on('data', data => {
         sum += data
       })
-      await ps.wait(read)
+      await bstream.wait(read)
       assert.equal(sum, 6)
     })
 
     it('allows not calling .push in a call', async () => {
       const arr = [1, 2, undefined, 3, null]
-      let read = ps.read(function () {
+      let read = bstream.read(function () {
         let data = arr.shift()
         if (data !== undefined) {
           this.push(data)
@@ -114,13 +120,13 @@ describe('bluestream', () => {
       read.on('data', data => {
         sum += data
       })
-      await ps.wait(read)
+      await bstream.wait(read)
       assert.equal(sum, 6)
     })
 
     it('#promise()', async () => {
       const arr = [1, 2, 3, null]
-      let read = ps.read(function () {
+      let read = bstream.read(function () {
         return arr.shift()
       })
       await read.promise()
@@ -128,50 +134,154 @@ describe('bluestream', () => {
     })
   })
 
+  describe('PromiseTransformStream', () => {
+    it('works with .push', async () => {
+      const arr = [1, 2, 3]
+      let transform = bstream.transform(function (data) {
+        this.push(data)
+      })
+      let sum = 0
+      transform.on('data', data => {
+        sum += data
+      })
+      arr.map(data => transform.write(data))
+      transform.end()
+      await bstream.wait(transform)
+      assert.equal(sum, 6)
+    })
+
+    it('works with .push of a promise', async () => {
+      const arr = [1, 2, 3]
+      let transform = bstream.transform(function (data) {
+        this.push(Promise.resolve(data))
+      })
+      let sum = 0
+      transform.on('data', data => {
+        sum += data
+      })
+      arr.map(data => transform.write(data))
+      transform.end()
+      await bstream.wait(transform)
+      assert.equal(sum, 6)
+    })
+
+    it('pushes a return value', async () => {
+      const arr = [1, 2, 3]
+      let transform = bstream.transform(data => data)
+      let sum = 0
+      transform.on('data', data => {
+        sum += data
+      })
+      arr.map(data => transform.write(data))
+      transform.end()
+      await bstream.wait(transform)
+      assert.equal(sum, 6)
+    })
+
+    it('pushes a promise return', async () => {
+      const arr = [1, 2, 3]
+      let transform = bstream.transform(async function (data) {
+        return data
+      })
+      let sum = 0
+      transform.on('data', data => {
+        sum += data
+      })
+      arr.map(data => transform.write(data))
+      transform.end()
+      await bstream.wait(transform)
+      assert.equal(sum, 6)
+    })
+
+    it('allows not returning a value', async () => {
+      const arr = [1, 2, 5]
+      let transform = bstream.transform(data => {
+        if (data !== 2) {
+          return data
+        }
+      })
+      let sum = 0
+      transform.on('data', data => {
+        sum += data
+      })
+      arr.map(data => transform.write(data))
+      transform.end()
+      await bstream.wait(transform)
+      assert.equal(sum, 6)
+    })
+
+    it('allows not calling .push in a call', async () => {
+      const arr = [1, 2, 5]
+      let transform = bstream.transform(function (data) {
+        if (data !== 2) {
+          return data
+        }
+      })
+      let sum = 0
+      transform.on('data', data => {
+        sum += data
+      })
+      arr.map(data => transform.write(data))
+      transform.end()
+      await bstream.wait(transform)
+      assert.equal(sum, 6)
+    })
+
+    it('#promise()', async () => {
+      const arr = [1, 2, 3]
+      let count = 0
+      let transform = bstream.transform(data => count++)
+      arr.map(data => transform.write(data))
+      transform.end()
+      await transform.promise()
+      assert.equal(count, 3)
+    })
+
+    it('supports writable objects and readable strings', async () => {
+      let stream = bstream.transform({
+        writeObjectMode: true,
+        readObjectMode: false
+      }, function ({ value }) {
+        this.push(value.toString())
+      })
+      const sampleData = 'This is a clever message about tech and dogs'
+
+      let dataReceived = false
+      stream.on('data', data => {
+        assert.equal(data, sampleData)
+        dataReceived = true
+      })
+
+      stream.write({ value: sampleData })
+      stream.end()
+      await stream.promise()
+      assert.isTrue(dataReceived, dataReceived)
+    })
+  })
+
+  describe('PromiseReduceStream', () => {
+    it('.promise() resolves the end result', async () => {
+      const reduce = objects().pipe(bstream.reduce(async (acc, el) => acc + el.value, 0))
+      const total = await reduce.promise()
+      assert.equal(total, 21)
+    })
+  })
+
   describe('wait', () => {
-    it('ps.wait', async () => {
+    it('bstream.wait', async () => {
       var last = 0
-      await ps.wait(lines().pipe(ps.map(async function (el) {
-        await Promise.delay(1)
+      await bstream.wait(lines().pipe(bstream.map(async (el) => {
+        await nextTick()
         if (el) { last = el }
         return el
       })))
       assert.equal(last, '9', 'should wait for the last element')
     })
-
-    it('map().wait', async () => {
-      var last = 0
-      await lines().pipe(delayer())
-        .map(function (el) {
-          return Promise.delay(1).then(function () {
-            return (last = el)
-          })
-        }).wait()
-      assert.equal(last, 9, 'should wait for the last element')
-    })
-  })
-
-  describe('map reduce', () => {
-    it('delayer().map(..).filter(..).reduce(..).then(..)', function () {
-      return lines().pipe(delayer())
-        .map(function (el) {
-          return el * 2
-        })
-        .filter(function (el) {
-          return el > 4
-        })
-        .reduce(function (acc, el) {
-          return acc + el
-        })
-        .then(function (sum) {
-          assert.equal(sum, 84 * 3, 'should map-reduce to correct sum')
-        })
-    })
   })
 
   describe('collect', () => {
     it('collect()', function () {
-      return ps.collect(raw()).then(function (data) {
+      return bstream.collect(raw()).then(function (data) {
         assert.equal(data.length, 18 * 3, 'test.txt should be the correct size')
       })
     })
@@ -179,16 +289,18 @@ describe('bluestream', () => {
 
   describe('collect', () => {
     it('collect(objects)', function () {
-      return ps.collect(objects()).then(function (data) {
+      return bstream.collect(objects()).then(function (data) {
         assert.equal(data.length, 6, 'array of objects should be the correct size')
-        assert.deepEqual(data, [1, 2, 3, 4, 5, 6])
+        assert.deepEqual(data, [
+          { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }, { value: 6 }
+        ])
       })
     })
   })
 
   describe('error', () => {
     it('error', function () {
-      return lines().pipe(ps.map(function (el) {
+      return lines().pipe(bstream.map(function (el) {
         return Promise.reject(new Error('Oops'))
       })).wait().then(function (val) {
         assert.ok(false, 'should not execute')
