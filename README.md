@@ -6,8 +6,6 @@ A collection of NodeJS Streams and stream utilities that work well with promises
 
 Originally forked from [promise-streams](https://github.com/spion/promise-streams) but with some different goals and a lot more tests. Named after bluebird but not actually using bluebird. (Though we work great with it, highly recommended!)
 
-
-
 - `PromiseReadStream` Easy async producing of data
 - `PromiseTransformStream` Easy async transforming of data
 - `PromiseReduceStream` similar to `Array.prototype.reduce` but a stream that emits each step and `.promise()` resolves to the end result
@@ -18,7 +16,6 @@ Originally forked from [promise-streams](https://github.com/spion/promise-stream
 - `bstream.pipeline(source, target, [target,])` Returns a promise for when the last target stream finishes
 
 # example
-
 
 ```js
 const request = require('request')
@@ -44,7 +41,6 @@ downloadAllFrom('http://imgur.com/').then(
     total => console.log(total, "images downloaded"),
     err   => console.error(err.stack))
 ```
-
 
 # api
 
