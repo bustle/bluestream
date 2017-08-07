@@ -16,10 +16,21 @@ function raw () {
 
 function objects () {
   const arr = [1, 2, 3, 4, 5, 6]
-  return new Readable({ objectMode: true,
+  return new Readable({
+    objectMode: true,
     read () {
       const value = arr.shift()
       this.push(value ? { value } : null)
+    }})
+}
+
+function numbers () {
+  const arr = [1, 2, 3, 4, 5, 6, null]
+  return new Readable({
+    objectMode: true,
+    read () {
+      const value = arr.shift()
+      this.push(value)
     }})
 }
 
@@ -136,7 +147,6 @@ describe('bluestream', () => {
 
   describe('PromiseTransformStream', () => {
     it('works with .push', async () => {
-      const arr = [1, 2, 3]
       let transform = bstream.transform(function (data) {
         this.push(data)
       })
@@ -144,14 +154,11 @@ describe('bluestream', () => {
       transform.on('data', data => {
         sum += data
       })
-      arr.map(data => transform.write(data))
-      transform.end()
-      await bstream.wait(transform)
-      assert.equal(sum, 6)
+      await bstream.pipe(numbers(), transform)
+      assert.equal(sum, 21)
     })
 
     it('works with .push of a promise', async () => {
-      const arr = [1, 2, 3]
       let transform = bstream.transform(function (data) {
         this.push(Promise.resolve(data))
       })
@@ -159,27 +166,21 @@ describe('bluestream', () => {
       transform.on('data', data => {
         sum += data
       })
-      arr.map(data => transform.write(data))
-      transform.end()
-      await bstream.wait(transform)
-      assert.equal(sum, 6)
+      await bstream.pipe(numbers(), transform)
+      assert.equal(sum, 21)
     })
 
     it('pushes a return value', async () => {
-      const arr = [1, 2, 3]
       let transform = bstream.transform(data => data)
       let sum = 0
       transform.on('data', data => {
         sum += data
       })
-      arr.map(data => transform.write(data))
-      transform.end()
-      await bstream.wait(transform)
-      assert.equal(sum, 6)
+      await bstream.pipe(numbers(), transform)
+      assert.equal(sum, 21)
     })
 
     it('pushes a promise return', async () => {
-      const arr = [1, 2, 3]
       let transform = bstream.transform(async function (data) {
         return data
       })
@@ -187,14 +188,11 @@ describe('bluestream', () => {
       transform.on('data', data => {
         sum += data
       })
-      arr.map(data => transform.write(data))
-      transform.end()
-      await bstream.wait(transform)
-      assert.equal(sum, 6)
+      await bstream.pipe(numbers(), transform)
+      assert.equal(sum, 21)
     })
 
     it('allows not returning a value', async () => {
-      const arr = [1, 2, 5]
       let transform = bstream.transform(data => {
         if (data !== 2) {
           return data
@@ -204,14 +202,11 @@ describe('bluestream', () => {
       transform.on('data', data => {
         sum += data
       })
-      arr.map(data => transform.write(data))
-      transform.end()
-      await bstream.wait(transform)
-      assert.equal(sum, 6)
+      await bstream.pipe(numbers(), transform)
+      assert.equal(sum, 19)
     })
 
     it('allows not calling .push in a call', async () => {
-      const arr = [1, 2, 5]
       let transform = bstream.transform(function (data) {
         if (data !== 2) {
           return data
@@ -221,25 +216,19 @@ describe('bluestream', () => {
       transform.on('data', data => {
         sum += data
       })
-      arr.map(data => transform.write(data))
-      transform.end()
-      await bstream.wait(transform)
-      assert.equal(sum, 6)
+      await bstream.pipe(numbers(), transform)
+      assert.equal(sum, 19)
     })
 
     it('#promise()', async () => {
-      const arr = [1, 2, 3]
       let count = 0
       let transform = bstream.transform(data => count++)
-      arr.map(data => transform.write(data))
-      transform.end()
-      await transform.promise()
-      assert.equal(count, 3)
+      await bstream.pipe(numbers(), transform)
+      assert.equal(count, 6)
     })
 
-    it('native supports writable objects and readable buffers', async () => {
-      const { Transform } = require('stream')
-      let stream = new Transform({
+    it('supports writable objects and readable buffers', async () => {
+      let transform = new bstream.PromiseTransformStream({
         writableObjectMode: true,
         readableObjectMode: false,
         transform ({ value }) {
@@ -247,48 +236,16 @@ describe('bluestream', () => {
           this.push(data)
         }
       })
-      const sampleData = 'This is a clever message about tech and dogs'
 
-      let dataReceived = false
-      stream.on('data', data => {
-        assert.deepEqual(data, Buffer.from(sampleData))
-        dataReceived = true
-        console.log('compared')
-      })
-
-      stream.write({ value: sampleData })
-      stream.end()
-      console.log('wait')
-      await bstream.wait(stream)
-      assert.isTrue(dataReceived, dataReceived)
-    })
-
-    it('supports writable objects and readable buffers', async () => {
-      let stream = new bstream.PromiseTransformStream({
-        writableObjectMode: true,
-        readableObjectMode: false,
-        transform ({ value }) {
-          this.push(value.toString())
-        }
-      })
-      const sampleData = 'This is a clever message about tech and dogs'
-
-      let dataReceived = false
-      stream.on('data', data => {
-        assert.equal(data, Buffer.from(sampleData))
-        dataReceived = true
-      })
-
-      stream.write({ value: sampleData })
-      stream.end()
-      await stream.promise()
-      assert.isTrue(dataReceived, dataReceived)
+      bstream.pipe(objects(), transform)
+      assert.deepEqual(await bstream.collect(transform), Buffer.from('123456'))
     })
   })
 
   describe('PromiseReduceStream', () => {
     it('.promise() resolves the end result', async () => {
-      const reduce = objects().pipe(bstream.reduce(async (acc, el) => acc + el.value, 0))
+      const reduce = bstream.reduce(async (acc, el) => acc + el.value, 0)
+      objects().pipe(reduce)
       const total = await reduce.promise()
       assert.equal(total, 21)
     })
