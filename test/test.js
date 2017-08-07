@@ -237,18 +237,45 @@ describe('bluestream', () => {
       assert.equal(count, 3)
     })
 
-    it('supports writable objects and readable strings', async () => {
-      let stream = bstream.transform({
-        writeObjectMode: true,
-        readObjectMode: false
-      }, function ({ value }) {
-        this.push(value.toString())
+    it('native supports writable objects and readable buffers', async () => {
+      const { Transform } = require('stream')
+      let stream = new Transform({
+        writableObjectMode: true,
+        readableObjectMode: false,
+        transform ({ value }) {
+          const data = value.toString()
+          this.push(data)
+        }
       })
       const sampleData = 'This is a clever message about tech and dogs'
 
       let dataReceived = false
       stream.on('data', data => {
-        assert.equal(data, sampleData)
+        assert.deepEqual(data, Buffer.from(sampleData))
+        dataReceived = true
+        console.log('compared')
+      })
+
+      stream.write({ value: sampleData })
+      stream.end()
+      console.log('wait')
+      await bstream.wait(stream)
+      assert.isTrue(dataReceived, dataReceived)
+    })
+
+    it('supports writable objects and readable buffers', async () => {
+      let stream = new bstream.PromiseTransformStream({
+        writableObjectMode: true,
+        readableObjectMode: false,
+        transform ({ value }) {
+          this.push(value.toString())
+        }
+      })
+      const sampleData = 'This is a clever message about tech and dogs'
+
+      let dataReceived = false
+      stream.on('data', data => {
+        assert.equal(data, Buffer.from(sampleData))
         dataReceived = true
       })
 
