@@ -1,6 +1,6 @@
 {
   "name": "bluestream",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "description": "A collection of streams that work well with promises (through, map, reduce)",
   "main": "lib",
   "scripts": {
