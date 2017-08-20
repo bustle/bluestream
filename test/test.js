@@ -1,7 +1,6 @@
 
 const fs = require('fs')
 const path = require('path')
-const Promise = require('bluebird')
 const split = require('split2')
 const Readable = require('stream').Readable
 const assert = require('chai').assert

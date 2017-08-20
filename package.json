@@ -10,6 +10,7 @@
   },
   "keywords": [
     "through",
+    "through2",
     "promise",
     "stream",
     "readable",
@@ -17,9 +18,7 @@
   ],
   "author": "reconbot",
   "license": "MIT",
-  "dependencies": {
-    "bluebird": "^3.5.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "blue-tape": "^0.1.10",
     "chai": "^4.1.0",
@@ -34,7 +33,7 @@
     "split2": "^1.0.0"
   },
   "engines": {
-    "node": ">=0.12"
+    "node": ">=4"
   },
   "eslintConfig": {
     "env": {
