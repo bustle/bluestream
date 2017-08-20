@@ -1,0 +1,14 @@
+{
+  "plugins": ["fast-async"],
+  "presets": [
+    ["env", {
+      "targets": {
+        "node": "4"
+      },
+      "exclude": [
+        "transform-regenerator",
+        "transform-async-to-generator"
+      ]
+    }]
+  ]
+}

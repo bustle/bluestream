@@ -20,6 +20,7 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "babel-preset-env": "^1.6.0",
     "babel-register": "^6.26.0",
     "blue-tape": "^0.1.10",
     "chai": "^4.1.0",
@@ -30,6 +31,7 @@
     "eslint-plugin-node": "^5.1.1",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
+    "fast-async": "^6.3.0",
     "mocha": "^3.5.0",
     "split2": "^1.0.0"
   },
