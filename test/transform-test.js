@@ -1,5 +1,4 @@
 
-const Promise = require('bluebird')
 const Readable = require('stream').Readable
 const assert = require('chai').assert
 const bstream = require('../')
@@ -131,7 +130,7 @@ describe('PromiseTransformStream', () => {
       }
       if (data === 2) {
         defered.resolve(1)
-        return Promise.resolve(2)
+        return 2
       }
       if (data === 'end') {
         return null
@@ -141,6 +140,6 @@ describe('PromiseTransformStream', () => {
     transform.write(2)
     transform.write('end')
     const data = await bstream.collect(transform)
-    assert.deepEqual(data, [1, 2])
+    assert.deepEqual(data, [2, 1])
   })
 })
