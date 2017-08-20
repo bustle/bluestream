@@ -1,4 +1,3 @@
-
 const Readable = require('stream').Readable
 const assert = require('chai').assert
 const bstream = require('../')

@@ -1,9 +1,7 @@
-
 const fs = require('fs')
 const path = require('path')
 const split = require('split2')
-const Readable = require('stream').Readable
-const assert = require('chai').assert
+const { Readable } = require('stream')
 const bstream = require('../')
 
 function lines () {

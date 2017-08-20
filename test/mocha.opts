@@ -1,1 +1,3 @@
 --bail
+--require babel-register
+--require chai/register-assert

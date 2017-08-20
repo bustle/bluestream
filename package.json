@@ -20,6 +20,7 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "babel-register": "^6.26.0",
     "blue-tape": "^0.1.10",
     "chai": "^4.1.0",
     "eslint": "^4.3.0",
