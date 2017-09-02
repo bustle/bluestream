@@ -86,7 +86,7 @@ describe('PromiseTransformStream', () => {
   })
 
   it('allows not calling .push in a call', async () => {
-    let transform = bstream.transform(function (data) {
+    let transform = bstream.transform(data => {
       if (data !== 2) {
         return data
       }
@@ -99,10 +99,46 @@ describe('PromiseTransformStream', () => {
     assert.equal(sum, 19)
   })
 
+  it('handles sync errors', async () => {
+    let transform = bstream.transform(() => { throw new Error("I'm an Error") })
+    const transformPromise = transform.promise()
+    transform.write(4)
+    await transformPromise.then(() => {
+      assert.isTrue(false, 'The promise should have rejected')
+    }, err => {
+      assert.isNotNull(err)
+    })
+  })
+
+  it('handles async errors', async () => {
+    let transform = bstream.transform(async () => { throw new Error("I'm an Error") })
+    const transformPromise = transform.promise()
+    transform.write(4)
+    await transformPromise.then(() => {
+      assert.isTrue(false, 'The promise should have rejected')
+    }, err => {
+      assert.isNotNull(err)
+    })
+  })
+
+  it('handles pushing rejected promises', async () => {
+    let transform = bstream.transform(function () {
+      this.push(Promise.reject(new Error("I'm an Error")))
+    })
+    const transformPromise = transform.promise()
+    transform.write(4)
+    await transformPromise.then(() => {
+      assert.isTrue(false, 'The promise should have rejected')
+    }, err => {
+      assert.isNotNull(err)
+    })
+  })
+
   it('#promise()', async () => {
     let count = 0
     let transform = bstream.transform(data => count++)
-    await bstream.pipe(numbers(), transform)
+    numbers().pipe(transform)
+    await transform.promise()
     assert.equal(count, 6)
   })
 
@@ -123,7 +159,7 @@ describe('PromiseTransformStream', () => {
   it('allows for concurrent operations', async () => {
     // resolve the promise from the deferred on the 2nd data event
     const defered = defer()
-    let transform = bstream.transform({ concurrent: 2, log: true }, async data => {
+    let transform = bstream.transform({ concurrent: 2 }, async data => {
       if (data === 1) {
         return defered.promise
       }
