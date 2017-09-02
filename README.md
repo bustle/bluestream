@@ -2,27 +2,28 @@
 
 [![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream)
 
-A collection of NodeJS Streams and stream utilities that work well with promises and async functions. The goal is to reduce the edge cases when mixing streams and promises.
+A collection of NodeJS Streams and stream utilities that work well with promises and async functions. The goal is to reduce the edge cases when mixing streams and promises. These are a little bit slower than normal streams however they are much more forgiving.
 
 Originally forked from [promise-streams](https://github.com/spion/promise-streams) but with some different goals and a lot more tests. Named after bluebird but not actually using bluebird. (Though we work great with it, highly recommended!)
 
 - `PromiseReadStream` Easy async producing of data
 - `PromiseTransformStream` Easy async transforming of data
+- `PromiseWriteStream` Easy async writing of data
+- `PromiseFilterStream` similar to `Array.prototype.filter` Easy stream filtering of data
 - `PromiseReduceStream` similar to `Array.prototype.reduce` but a stream that emits each step and `.promise()` resolves to the end result
 
 - `bstream.wait(stream)` resolves when the stream finishes
 - `bstream.collect(stream)` Concats strings and buffers, returns an array of objects.
-- `bstream.pipe(source, target)` Returns a promise for when the target stream finishes
-- `bstream.pipeline(source, target, [target,])` Returns a promise for when the last target stream finishes
+- `bstream.pipe(source, target, [target,])` Returns a promise for when the last target stream finishes
 
-# example
+# Examples
 
 ```js
 const request = require('request')
 const path = require('path')
 const fs = require('fs')
 const bstream = require('bluestream')
-const select = require('./select-elements')
+const select = require('./select-elements') // made up stream
 
 const download = url =>
   bstream.wait(request('http:' + url).pipe(
@@ -30,16 +31,18 @@ const download = url =>
   ));
 
 const downloadAllFrom = url =>
-    request(url)
-    .pipe(select('.post a img', el => el.attributes.SRC))
-    .pipe(bstream.filter(url => /jpg$/.test(url.toLowerCase()))
-    .pipe(bstream.map({concurrent: 4}, imgurl => download(imgurl, url)))
-    .reduce((count, stream) => count + 1, 0)
-    .promise();
+  bstream.pipe(
+    request(url),
+    select('.post a img', el => el.attributes.SRC),
+    bstream.filter(url => /jpg$/.test(url.toLowerCase())),
+    bstream.map({concurrent: 4}, imgurl => download(imgurl, url)),
+    bstream.reduce((count, stream) => count + 1, 0)
+  );
 
 downloadAllFrom('http://imgur.com/').then(
-    total => console.log(total, "images downloaded"),
-    err   => console.error(err.stack))
+  total => console.log(total, "images downloaded"),
+  err   => console.error(err.message)
+)
 ```
 
 # api
@@ -53,17 +56,20 @@ downloadAllFrom('http://imgur.com/').then(
 Create a read-promise stream. Pass it a function that takes the number of bytes or objects of wanted data and and uses `this.push` or `return` to push values or promises. This function should return a promise that indicates when the object/chunk are fully processed. Return `null` to end the stream.
 
 Options:
+  * `read` - An optional way to pass the read function
+
   * `objectMode` - true or false
+
   * all other `Readable` stream options
 
 The other options are also passed to node's Read stream constructor.
 
-A `PromiseReadStream` works like a normal `ReadableStream` but the `_read` and `push()` methods have some notable differences. (The `_read` method can be provided as the only argument, in a `read` key on the options, or as the `_read` method if you extend `PromiseReadStream`.) Object mode is the default.
+A `PromiseReadStream` works like a normal `ReadableStream` but the `_read` and `push()` methods have some notable differences. (The `_read` method can be provided as the only argument, in a `read` key on the options, or as the `_read` method if you extend `PromiseReadStream`.) Any returned, non undefined, value will automatically be pushed. Object mode is the default.
 
 `_read(bytesWanted)`
 - Is async function friendly, a rejection/throw will be handled as an error event
 - Is called again only after it returns or resolves regardless of how many times you call `.push`
-- Is called again if you don't push (To aid in controll flow)
+- Is called again if you don't push (To aid in control flow)
 - Pushes any non `undefined` return values
 
 `this.push()`
@@ -79,7 +85,7 @@ const listStream = bstream.read(() => list.shift() || null)
 
 // readable stream from redis scans
 import Redis from 'io-redis'
-var redis = new Redis()
+const redis = new Redis()
 let cursor = 0
 
 const hscanStream = bstream.read(async () => {
@@ -93,16 +99,18 @@ const hscanStream = bstream.read(async () => {
 ```
 
 #### ps.transform
+#### ps.map
 
 `([opts:Options,] fn:(data[, enc]) => Promise)) => PromiseTransformStream`
 
+#### PromiseTransformStream
+
 Create a transform-promise stream. Pass it a function that takes data and
-encoding and uses `this.push` to push values or promises. This function should
+encoding and uses `this.push` to push values or promises. Any returned, non undefined, value will automatically be pushed. This function should
 return a promise that indicates when the object/chunk are fully processed.
 
-Returns a PromiseStream.
-
 Options:
+  * `transform` - An optional way to pass the transform function
 
   * `concurrent` - The maximum number of concurrent promises that are allowed.
     When this limit is reached, the stream will stop processing data and will
@@ -114,20 +122,35 @@ Options:
 
 The other options are also passed to node's Transform stream constructor.
 
-#### ps.map
+#### ps.write
 
-`([opts:Options,] fn: (data[, enc]) => Promise) => MapPromiseStream`
+`([opts:Options,] fn:(data[, enc]) => Promise)) => PromiseWriteStream`
 
-Create a new MapPromiseStream. The function should return a promise for the
-next object that will be pushed to the stream.
+#### PromiseWriteStream
 
-Options: Same as `ps.transform`
+Create a write-promise stream. Pass it a function that takes data and
+encoding returns a promise that indicates when the object/chunk are fully processed.
+
+Options:
+  * `write` - An optional way to pass the write function
+
+  * `writev` - Not supported, and passed directly to the underlying `Writable` stream
+
+  * `concurrent` - The maximum number of concurrent promises that are allowed.
+    When this limit is reached, the stream will stop processing data and will
+    start buffering incoming objects. Defaults to `1`
+
+  * `highWatermark` - the size (in objects) of the buffer mentioned above. When
+    this buffer fills up, the backpressure mechanism will activate. Its passed
+    to node's write stream.
+
+The other options are also passed to node's Write stream constructor.
 
 #### ps.filter
 
-`([opts:Options,] fn: (data[, enc]) => boolean) => FilterPromiseStream`
+`([opts:Options,] fn: async (data[, enc]) => boolean) => PromiseFilterStream`
 
-Create a new FilterPromiseStream. The function should return a boolean to
+Create a new PromiseFilterStream. The function should return a boolean to
 indicate whether the data value should pass to the next stream
 
 Options: Same as `ps.transform`
@@ -169,34 +192,6 @@ fulfilled without a value when the destination stream ends.
 `(source: Stream) => Promise`
 
 Returns a Buffer, string or array of all the data events concatenated together. If no events null is returned.
-
-#### PromiseStream.prototype.push
-
-Like `this.push` in [through2](//github.com/rvagg/through2), but takes promise
-arguments. It returns a promise that resolves when the pushed promise resolves,
-to make it possible to use `return this.push(data)`
-
-#### PromiseStream.prototype.map
-
-`([opts:Options,] fn: (data[, enc]) => Promise) => MapPromiseStream`
-
-Create a new MapPromiseStream and pipes this promise stream to it.
-
-#### PromiseStream.prototype.filter
-
-`([opts:Options,] fn: (data[, enc]) => boolean) => FilterPromiseStream`
-
-Create a new FilterPromiseStream and pipes this promise stream to it.
-
-#### PromiseStream.prototype.reduce
-
-`([opts:Options,] fn: (acc, data[, enc]) => Promise) => Promise`
-
-Reduces the objects in this promise stream. The function takes the resolved
-current accumulator and data object and should return the next accumulator
-or a promise for the next accumulator.
-
-Returns a promise for the final reduction result
 
 #### PromiseStream.promise
 

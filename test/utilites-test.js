@@ -27,9 +27,9 @@ function nextTick () {
   })
 }
 
-describe('wait', () => {
+describe('#wait', () => {
   it('bstream.wait', async () => {
-    var last = 0
+    let last = 0
     await bstream.wait(lines().pipe(bstream.map(async (el) => {
       await nextTick()
       if (el) { last = el }
@@ -39,7 +39,7 @@ describe('wait', () => {
   })
 })
 
-describe('collect', () => {
+describe('#collect', () => {
   it('collect()', function () {
     return bstream.collect(rawString()).then(function (data) {
       assert.equal(data.length, 18 * 3, 'test.txt should be the correct size')
@@ -56,10 +56,22 @@ describe('collect', () => {
   })
 })
 
+describe('#pipe', () => {
+  it('pipes multiple streams together', async () => {
+    const numbers = []
+    const extract = objects()
+    const transform = bstream.filter(({ value }) => value % 2 === 0)
+    const load = bstream.write(({ value }) => numbers.push(value))
+
+    await bstream.pipe(extract, transform, load)
+    assert.deepEqual(numbers, [2, 4, 6])
+  })
+})
+
 describe('error', () => {
-  it('error', function () {
-    return lines().pipe(bstream.map(function (el) {
-      return Promise.reject(new Error('Oops'))
+  it('error', async function () {
+    await lines().pipe(bstream.map(async (el) => {
+      throw new Error('Oops')
     })).wait().then(function (val) {
       assert.ok(false, 'should not execute')
     }, function (e) {
