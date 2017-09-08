@@ -24,6 +24,10 @@ function numbers () {
     }})
 }
 
+function delay (ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 describe('PromiseTransformStream', () => {
   it('works with .push', async () => {
     let transform = bstream.transform(function (data) {
@@ -176,5 +180,22 @@ describe('PromiseTransformStream', () => {
     transform.write('end')
     const data = await bstream.collect(transform)
     assert.deepEqual(data, [2, 1])
+  })
+
+  it('ensures all concurrent operations finish before finishing', async () => {
+    let finished = 0
+    const transform = bstream.transform({ concurrent: 6 }, num => delay(num).then(() => finished++))
+    await bstream.pipe(numbers(), transform)
+    assert.equal(finished, 6)
+  })
+
+  it('ensures all concurrent operations finish before ending with data', async () => {
+    let finished = 0
+    const transform = bstream.transform({ concurrent: 6 }, num => delay(num).then(() => finished++))
+    transform.write(1)
+    transform.write(2)
+    transform.end(3)
+    await transform.promise()
+    assert.equal(finished, 3)
   })
 })
