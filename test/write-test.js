@@ -13,6 +13,10 @@ function numbers () {
     }})
 }
 
+function delay (ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 describe('PromiseWriteStream', () => {
   it('works with an async function', async () => {
     let count = 0
@@ -55,5 +59,22 @@ describe('PromiseWriteStream', () => {
     writer.write(2)
     writer.end()
     await writer.promise()
+  })
+
+  it('ensures all concurrent operations finish before finishing', async () => {
+    let finished = 0
+    const writer = bstream.write({ concurrent: 6 }, num => delay(num).then(() => finished++))
+    await bstream.pipe(numbers(), writer)
+    assert.equal(finished, 6)
+  })
+
+  it('ensures all concurrent operations finish before ending with data', async () => {
+    let finished = 0
+    const writer = bstream.write({ concurrent: 6 }, num => delay(num).then(() => finished++))
+    writer.write(1)
+    writer.write(2)
+    writer.end(3)
+    await writer.promise()
+    assert.equal(finished, 3)
   })
 })
