@@ -17,6 +17,10 @@ function delay (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+function nextTick () {
+  return new Promise(resolve => process.nextTick(resolve))
+}
+
 describe('PromiseWriteStream', () => {
   it('works with an async function', async () => {
     let count = 0
@@ -76,5 +80,18 @@ describe('PromiseWriteStream', () => {
     writer.end(3)
     await writer.promise()
     assert.equal(finished, 3)
+  })
+
+  it('ensures all concurrent operations finish before ending', async () => {
+    let finished = 0
+    const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null]
+    const source = bstream.read(async function () {
+      await nextTick()
+      this.push(numbers.shift())
+      this.push(numbers.shift())
+    })
+    const sink = bstream.write({ concurrent: 6 }, num => delay(num).then(() => finished++))
+    await bstream.pipe(source, sink)
+    assert.equal(finished, 11)
   })
 })

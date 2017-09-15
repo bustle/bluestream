@@ -28,6 +28,10 @@ function delay (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+function nextTick () {
+  return new Promise(resolve => process.nextTick(resolve))
+}
+
 describe('PromiseTransformStream', () => {
   it('works with .push', async () => {
     let transform = bstream.transform(function (data) {
@@ -197,5 +201,21 @@ describe('PromiseTransformStream', () => {
     transform.end(3)
     await transform.promise()
     assert.equal(finished, 3)
+  })
+
+  it('ensures all concurrent operations finish before ending', async () => {
+    let finished = 0
+    const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null]
+    const source = bstream.read(async function () {
+      await nextTick()
+      this.push(numbers.shift())
+      this.push(numbers.shift())
+    })
+    const sink = bstream.transform({ concurrent: 6 }, async num => {
+      await delay(num)
+      finished++
+    })
+    await bstream.pipe(source, sink)
+    assert.equal(finished, 11)
   })
 })
