@@ -3,13 +3,18 @@ const assert = require('chai').assert
 const bstream = require('../')
 const defer = require('../lib/utils').defer
 
-function numbers () {
-  const arr = [1, 2, 3, 4, 5, 6, null]
+function numbers (num = 6) {
+  const arr = [...new Array(num)].map((val, i) => i + 1)
+  arr.push(null)
   return new Readable({
     objectMode: true,
     read () {
       const value = arr.shift()
-      this.push(value)
+      if (value % 2 === 0) {
+        this.push(value)
+      } else {
+        process.nextTick(() => this.push(value))
+      }
     }})
 }
 
@@ -74,7 +79,10 @@ describe('PromiseWriteStream', () => {
 
   it('ensures all concurrent operations finish before ending with data', async () => {
     let finished = 0
-    const writer = bstream.write({ concurrent: 6 }, num => delay(num).then(() => finished++))
+    const writer = bstream.write({ concurrent: 6 }, async num => {
+      await delay(num)
+      finished++
+    })
     writer.write(1)
     writer.write(2)
     writer.end(3)
