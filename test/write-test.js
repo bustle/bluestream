@@ -1,4 +1,5 @@
 const Readable = require('stream').Readable
+const DataLoader = require('dataloader')
 const assert = require('chai').assert
 const bstream = require('../')
 const defer = require('../lib/utils').defer
@@ -10,11 +11,7 @@ function numbers (num = 6) {
     objectMode: true,
     read () {
       const value = arr.shift()
-      if (value % 2 === 0) {
-        this.push(value)
-      } else {
-        process.nextTick(() => this.push(value))
-      }
+      this.push(value)
     }})
 }
 
@@ -98,8 +95,27 @@ describe('PromiseWriteStream', () => {
       this.push(numbers.shift())
       this.push(numbers.shift())
     })
-    const sink = bstream.write({ concurrent: 6 }, num => delay(num).then(() => finished++))
+    const sink = bstream.write({ concurrent: 6 }, async num => {
+      await nextTick()
+      finished++
+    })
     await bstream.pipe(source, sink)
     assert.equal(finished, 11)
+  })
+
+  it('ensures all concurrent operations finish before ending even if sync resolving', async function () {
+    this.timeout(10000)
+    let finished = 0
+    const db = new DataLoader(async ids => {
+      await delay(1)
+      return ids
+    })
+    const sink = bstream.write({ concurrent: 10 }, async num => {
+      await db.load(num)
+      await db.load(num * 2)
+      finished++
+    })
+    await bstream.pipe(numbers(6877), sink)
+    assert.equal(finished, 6877)
   })
 })
