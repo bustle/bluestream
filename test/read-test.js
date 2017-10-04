@@ -1,5 +1,9 @@
 const bstream = require('../')
 
+function nextTick (data) {
+  return new Promise(resolve => process.nextTick(() => resolve(data)))
+}
+
 describe('PromiseReadStream', () => {
   describe('constructors', () => {
     it('bstream.read()', async () => {
@@ -92,6 +96,40 @@ describe('PromiseReadStream', () => {
     })
     await bstream.wait(read)
     assert.equal(sum, 6)
+  })
+
+  it('allows pushing async and returning sync', async () => {
+    let callCount = 0
+    let read = bstream.read(function () {
+      callCount++
+      this.push(nextTick(1))
+      this.push(nextTick(2))
+      return null
+    })
+    let sum = 0
+    read.on('data', data => {
+      sum += data
+    })
+    await bstream.wait(read)
+    assert.equal(sum, 3)
+    assert.equal(callCount, 1)
+  })
+
+  it('does not call read until all pushed values have resolved to check for null', async () => {
+    let callCount = 0
+    let read = bstream.read(function () {
+      callCount++
+      this.push(nextTick(1))
+      this.push(nextTick(2))
+      this.push(null)
+    })
+    let sum = 0
+    read.on('data', data => {
+      sum += data
+    })
+    await bstream.wait(read)
+    assert.equal(sum, 3)
+    assert.equal(callCount, 1)
   })
 
   it('#promise()', async () => {
