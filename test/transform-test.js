@@ -183,7 +183,7 @@ describe('PromiseTransformStream', () => {
     transform.write(2)
     transform.write('end')
     const data = await bstream.collect(transform)
-    assert.deepEqual(data, [2, 1])
+    assert.deepEqual(data.sort(), [1, 2])
   })
 
   it('ensures all concurrent operations finish before finishing', async () => {
