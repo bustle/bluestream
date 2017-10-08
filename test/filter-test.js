@@ -11,7 +11,7 @@ function numbers () {
     }})
 }
 
-describe('PromiseFilterStream', () => {
+describe('FilterStream', () => {
   it('Filters based upon the passed in function', async () => {
     const filter = bstream.filter(data => (data % 2) === 0)
     numbers().pipe(filter)

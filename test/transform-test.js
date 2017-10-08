@@ -32,7 +32,7 @@ function nextTick () {
   return new Promise(resolve => process.nextTick(resolve))
 }
 
-describe('PromiseTransformStream', () => {
+describe('TransformStream', () => {
   it('works with .push', async () => {
     let transform = bstream.transform(function (data) {
       this.push(data)
@@ -151,7 +151,7 @@ describe('PromiseTransformStream', () => {
   })
 
   it('supports writable objects and readable buffers', async () => {
-    let transform = new bstream.PromiseTransformStream({
+    let transform = new bstream.TransformStream({
       writableObjectMode: true,
       readableObjectMode: false,
       transform ({ value }) {

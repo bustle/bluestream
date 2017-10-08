@@ -6,11 +6,11 @@ A collection of NodeJS Streams and stream utilities that work well with promises
 
 Originally forked from [promise-streams](https://github.com/spion/promise-streams) but with some different goals and a lot more tests. Named after bluebird but not actually using bluebird. (Though we work great with it, highly recommended!)
 
-- `PromiseReadStream` Easy async producing of data
-- `PromiseTransformStream` Easy async transforming of data
-- `PromiseWriteStream` Easy async writing of data
-- `PromiseFilterStream` similar to `Array.prototype.filter` Easy stream filtering of data
-- `PromiseReduceStream` similar to `Array.prototype.reduce` but a stream that emits each step and `.promise()` resolves to the end result
+- `ReadStream` Easy async producing of data
+- `TransformStream` Easy async transforming of data
+- `WriteStream` Easy async writing of data
+- `FilterStream` similar to `Array.prototype.filter` Easy stream filtering of data
+- `ReduceStream` similar to `Array.prototype.reduce` but a stream that emits each step and `.promise()` resolves to the end result
 
 - `bstream.wait(stream)` resolves when the stream finishes
 - `bstream.collect(stream)` Concats strings and buffers, returns an array of objects.
@@ -49,9 +49,9 @@ downloadAllFrom('http://imgur.com/').then(
 
 #### ps.read
 
-`([opts:Options,] fn:(bytesWanted) => Promise)) => PromiseReadStream`
+`([opts:Options,] fn:(bytesWanted) => Promise)) => ReadStream`
 
-#### PromiseReadStream
+#### ReadStream
 
 Create a read-promise stream. Pass it a function that takes the number of bytes or objects of wanted data and and uses `this.push` or `return` to push values or promises. This function should return a promise that indicates when the object/chunk are fully processed. Return `null` to end the stream.
 
@@ -64,7 +64,7 @@ Options:
 
 The other options are also passed to node's Read stream constructor.
 
-A `PromiseReadStream` works like a normal `ReadableStream` but the `_read` and `push()` methods have some notable differences. (The `_read` method can be provided as the only argument, in a `read` key on the options, or as the `_read` method if you extend `PromiseReadStream`.) Any returned, non undefined, value will automatically be pushed. Object mode is the default.
+A `ReadStream` works like a normal `ReadableStream` but the `_read` and `push()` methods have some notable differences. (The `_read` method can be provided as the only argument, in a `read` key on the options, or as the `_read` method if you extend `ReadStream`.) Any returned, non undefined, value will automatically be pushed. Object mode is the default.
 
 `_read(bytesWanted)`
 - Is async function friendly, a rejection/throw will be handled as an error event
@@ -101,9 +101,9 @@ const hscanStream = bstream.read(async () => {
 #### ps.transform
 #### ps.map
 
-`([opts:Options,] fn:(data[, enc]) => Promise)) => PromiseTransformStream`
+`([opts:Options,] fn:(data[, enc]) => Promise)) => TransformStream`
 
-#### PromiseTransformStream
+#### TransformStream
 
 Create a transform-promise stream. Pass it a function that takes data and
 encoding and uses `this.push` to push values or promises. Any returned, non undefined, value will automatically be pushed. This function should
@@ -124,9 +124,9 @@ The other options are also passed to node's Transform stream constructor.
 
 #### ps.write
 
-`([opts:Options,] fn:(data[, enc]) => Promise)) => PromiseWriteStream`
+`([opts:Options,] fn:(data[, enc]) => Promise)) => WriteStream`
 
-#### PromiseWriteStream
+#### WriteStream
 
 Create a write-promise stream. Pass it a function that takes data and
 encoding returns a promise that indicates when the object/chunk are fully processed.
@@ -148,22 +148,22 @@ The other options are also passed to node's Write stream constructor.
 
 #### ps.filter
 
-`([opts:Options,] fn: async (data[, enc]) => boolean) => PromiseFilterStream`
+`([opts:Options,] fn: async (data[, enc]) => boolean) => FilterStream`
 
-Create a new PromiseFilterStream. The function should return a boolean to
+Create a new FilterStream. The function should return a boolean to
 indicate whether the data value should pass to the next stream
 
 Options: Same as `ps.transform`
 
 #### ps.reduce
 
-`([opts:Options,] fn: (acc, data[, enc]) => Promise) => ReducePromiseStream`
+`([opts:Options,] fn: (acc, data[, enc]) => Promise) => ReduceStream`
 
 Reduces the objects in this promise stream. The function takes the resolved
 current accumulator and data object and should return the next accumulator
 or a promise for the next accumulator.
 
-The ReducePromiseStream has a `promise()` method which returns the final
+The ReduceStream has a `promise()` method which returns the final
 accumulator value
 
 ```js
@@ -200,6 +200,6 @@ Returns a Buffer, string or array of all the data events concatenated together. 
 Returns a promise fulfilled at the end of the stream, rejected if any errors
 events are emitted by the stream.
 
-For ReducePromiseStreams, the promise is for the final reduction result. Any
+For `ReduceStreams`, the promise is for the final reduction result. Any
 stream errors or exceptions encountered while reducing will result with a
 rejection of the promise.

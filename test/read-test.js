@@ -4,16 +4,16 @@ function nextTick (data) {
   return new Promise(resolve => process.nextTick(() => resolve(data)))
 }
 
-describe('PromiseReadStream', () => {
+describe('ReadStream', () => {
   describe('constructors', () => {
     it('bstream.read()', async () => {
       const read = bstream.read(() => {})
-      assert.instanceOf(read, bstream.PromiseReadStream)
+      assert.instanceOf(read, bstream.ReadStream)
     })
 
-    it('new PromiseReadStream()', async () => {
-      const read = new bstream.PromiseReadStream(() => {})
-      assert.instanceOf(read, bstream.PromiseReadStream)
+    it('new ReadStream()', async () => {
+      const read = new bstream.ReadStream(() => {})
+      assert.instanceOf(read, bstream.ReadStream)
     })
   })
 

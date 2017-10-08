@@ -26,7 +26,7 @@ function nextTick () {
   return new Promise(resolve => process.nextTick(resolve))
 }
 
-describe('PromiseWriteStream', () => {
+describe('WriteStream', () => {
   it('works with an async function', async () => {
     let count = 0
     let writer = bstream.write(async function (data) {
