@@ -11,7 +11,7 @@ function objects () {
     }})
 }
 
-describe('PromiseReduceStream', () => {
+describe('ReduceStream', () => {
   it('.promise() resolves the end result', async () => {
     const reduce = bstream.reduce(async (acc, el) => acc + el.value, 0)
     objects().pipe(reduce)
