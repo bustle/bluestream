@@ -1,7 +1,6 @@
-const Readable = require('stream').Readable
-const assert = require('chai').assert
-const bstream = require('../')
-const defer = require('../lib/utils').defer
+import { Readable } from 'stream'
+import { defer } from '../lib/utils'
+import * as bstream from '../lib'
 
 function numbers (num = 6) {
   const arr = [...new Array(num)].map((val, i) => i + 1)

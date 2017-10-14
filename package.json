@@ -2,11 +2,16 @@
   "name": "bluestream",
   "version": "5.0.7",
   "description": "A collection of streams that work well with promises (through, map, reduce)",
-  "main": "lib",
+  "main": "dist",
+  "repository": "git@github.com:bustle/bluestream.git",
+  "homepage": "https://github.com/bustle/bluestream",
+  "runkitExampleFilename": "example.js",
   "scripts": {
     "test": "npm run unit-test && npm run lint",
     "unit-test": "mocha",
-    "lint": "eslint ./"
+    "lint": "eslint lib test",
+    "build": "babel lib/ -d dist/",
+    "prepublish": "npm run build"
   },
   "keywords": [
     "through",
@@ -20,6 +25,8 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.0",
     "babel-register": "^6.26.0",
     "blue-tape": "^0.1.10",
@@ -31,12 +38,11 @@
     "eslint-plugin-node": "^5.1.1",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
-    "fast-async": "^6.3.0",
     "mocha": "^3.5.0",
     "split2": "^1.0.0"
   },
   "engines": {
-    "node": ">=4"
+    "node": ">=6"
   },
   "eslintConfig": {
     "env": {

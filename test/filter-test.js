@@ -1,5 +1,5 @@
-const { Readable } = require('stream')
-const bstream = require('../')
+import { Readable } from 'stream'
+import * as bstream from '../lib'
 
 function numbers () {
   const arr = [1, 2, 3, 4, 5, 6, null]

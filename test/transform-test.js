@@ -1,7 +1,6 @@
-const Readable = require('stream').Readable
-const assert = require('chai').assert
-const bstream = require('../')
-const defer = require('../lib/utils').defer
+import { Readable } from 'stream'
+import { defer } from '../lib/utils'
+import * as bstream from '../lib'
 
 function objects () {
   const arr = [1, 2, 3, 4, 5, 6]

@@ -1,6 +1,6 @@
 # bluestream
 
-[![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream)
+[![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream) | [![Try bluestream on RunKit](https://badge.runkitcdn.com/bluestream.svg)](https://npm.runkit.com/bluestream)
 
 A collection of NodeJS Streams and stream utilities that work well with promises and async functions. The goal is to reduce the edge cases when mixing streams and promises. These are a little bit slower than normal streams however they are much more forgiving.
 
@@ -19,30 +19,19 @@ Originally forked from [promise-streams](https://github.com/spion/promise-stream
 # Examples
 
 ```js
-const request = require('request')
-const path = require('path')
-const fs = require('fs')
-const bstream = require('bluestream')
-const select = require('./select-elements') // made up stream
+const bluestream = require('bluestream')
+const got = require('got')
+const url = id => `https://pokeapi.co/api/v2/pokemon/${id}/`
 
-const download = url =>
-  bstream.wait(request('http:' + url).pipe(
-    fs.createWriteStream('images/' + path.basename(url))
-  ));
+const download = id => got(url(id), { json: true }).then(resp => resp.body)
 
-const downloadAllFrom = url =>
-  bstream.pipe(
-    request(url),
-    select('.post a img', el => el.attributes.SRC),
-    bstream.filter(url => /jpg$/.test(url.toLowerCase())),
-    bstream.map({concurrent: 4}, imgurl => download(imgurl, url)),
-    bstream.reduce((count, stream) => count + 1, 0)
-  );
+const favoritePokemon = [1, 2, 3, 4, 5]
+const pokeStream = bluestream.read(() => favoritePokemon.shift() || null)
+const downloadStream = bluestream.transform({ concurrent: 2 }, download)
+const logStream = bluestream.write(pokemon => console.log(pokemon.name))
 
-downloadAllFrom('http://imgur.com/').then(
-  total => console.log(total, "images downloaded"),
-  err   => console.error(err.message)
-)
+await bluestream.pipe(pokeStream, downloadStream, logStream)
+console.log('caught them all')
 ```
 
 # api
