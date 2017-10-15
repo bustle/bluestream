@@ -1,8 +1,8 @@
-const fs = require('fs')
-const path = require('path')
-const split = require('split2')
-const { Readable } = require('stream')
-const bstream = require('../')
+import fs from 'fs'
+import path from 'path'
+import split from 'split2'
+import { Readable } from 'stream'
+import * as bstream from '../lib'
 
 function lines () {
   return rawString().pipe(split())
@@ -72,7 +72,7 @@ describe('error', () => {
   it('error', async function () {
     await lines().pipe(bstream.map(async (el) => {
       throw new Error('Oops')
-    })).wait().then(function (val) {
+    })).promise().then(function (val) {
       assert.ok(false, 'should not execute')
     }, function (e) {
       assert.ok(e, 'should be rejected')

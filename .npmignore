@@ -4,3 +4,5 @@ test
 .babelrc
 .gitignore
 .travis.yml
+lib
+.vscode

@@ -1,4 +1,4 @@
-const bstream = require('../')
+import * as bstream from '../lib'
 
 function nextTick (data) {
   return new Promise(resolve => process.nextTick(() => resolve(data)))
