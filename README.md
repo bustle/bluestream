@@ -22,22 +22,21 @@ Originally forked from [promise-streams](https://github.com/spion/promise-stream
 const bluestream = require('bluestream')
 const got = require('got')
 
-const download = ({ url }) => got(url, { json: true }).then(resp => resp.body)
-
-let offset = 0
 const pokeStream = bluestream.read(async function () {
-  const { body: pokemon } = await got(`https://pokeapi.co/api/v2/pokemon/?offset=${offset}`, { json: true })
+  this.offset = this.offset || 0
+  const { body: pokemon } = await got(`https://pokeapi.co/api/v2/pokemon/?offset=${this.offset}`, { json: true })
   if (pokemon.results.length > 0) {
-    offset += pokemon.results.length
+    this.offset += pokemon.results.length
     pokemon.results.map(monster => this.push(monster))
   } else {
     return null
   }
 })
-const downloadStream = bluestream.transform({ concurrent: 2 }, download)
-const logStream = bluestream.write(pokemon => console.log(pokemon.name))
 
-await bluestream.pipe(pokeStream, downloadStream, logStream)
+const pokedexStream = bluestream.transform({ concurrent: 2 }, ({ url }) => got(url, { json: true }).then(resp => resp.body))
+const logStream = bluestream.write(pokemon => console.log(pokemon.name, pokemon.sprites.front_default))
+
+await bluestream.pipe(pokeStream, pokedexStream, logStream)
 console.log('caught them all')
 ```
 
