@@ -1,6 +1,6 @@
 {
   "name": "bluestream",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "A collection of streams that work well with promises (through, map, reduce)",
   "main": "dist",
   "repository": "git@github.com:bustle/bluestream.git",
