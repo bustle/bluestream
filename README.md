@@ -1,6 +1,6 @@
 # bluestream
 
-[![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream) | [![Try bluestream on RunKit](https://badge.runkitcdn.com/bluestream.svg)](https://npm.runkit.com/bluestream)
+[![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream) [![Try bluestream on RunKit](https://badge.runkitcdn.com/bluestream.svg)](https://npm.runkit.com/bluestream)
 
 A collection of NodeJS Streams and stream utilities that work well with promises and async functions. The goal is to reduce the edge cases when mixing streams and promises. These are a little bit slower than normal streams however they are much more forgiving.
 
