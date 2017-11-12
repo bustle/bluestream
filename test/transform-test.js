@@ -32,6 +32,20 @@ function nextTick () {
 }
 
 describe('TransformStream', () => {
+  it('allows extension', async () => {
+    class MyTransform extends bstream.TransformStream {
+      _transform (data) {
+        this.push(data)
+      }
+    }
+    const transform = new MyTransform()
+    let sum = 0
+    transform.on('data', data => {
+      sum += data
+    })
+    await bstream.pipe(numbers(), transform)
+    assert.equal(sum, 21)
+  })
   it('works with .push', async () => {
     let transform = bstream.transform(function (data) {
       this.push(data)

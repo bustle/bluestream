@@ -26,6 +26,18 @@ function nextTick () {
 }
 
 describe('WriteStream', () => {
+  it('allows extension', async () => {
+    let count = 0
+    class MyWrite extends bstream.WriteStream {
+      _write (data) {
+        count += data
+      }
+    }
+    const writer = new MyWrite()
+    await bstream.pipe(numbers(), writer)
+    assert.equal(count, 21)
+  })
+
   it('works with an async function', async () => {
     let count = 0
     let writer = bstream.write(async function (data) {

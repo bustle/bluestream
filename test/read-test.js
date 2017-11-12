@@ -15,6 +15,22 @@ describe('ReadStream', () => {
       const read = new bstream.ReadStream(() => {})
       assert.instanceOf(read, bstream.ReadStream)
     })
+
+    it('allows extension', async () => {
+      const arr = [1, 2, 3, null]
+      class MyRead extends bstream.ReadStream {
+        _read () {
+          this.push(arr.shift())
+        }
+      }
+      const read = new MyRead()
+      let sum = 0
+      read.on('data', data => {
+        sum += data
+      })
+      await bstream.wait(read)
+      assert.equal(sum, 6)
+    })
   })
 
   it('works with .push', async () => {
