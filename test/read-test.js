@@ -35,7 +35,7 @@ describe('ReadStream', () => {
 
   it('works with .push', async () => {
     const arr = [1, 2, 3, null]
-    let read = bstream.read(function () {
+    const read = bstream.read(function () {
       this.push(arr.shift())
     })
     let sum = 0
@@ -143,6 +143,29 @@ describe('ReadStream', () => {
     read.on('data', data => {
       sum += data
     })
+    await bstream.wait(read)
+    assert.equal(sum, 3)
+    assert.equal(callCount, 1)
+  })
+
+  it('allows for an external pushing of null to end the stream early', async () => {
+    let callCount = 0
+    let pushCount = 0
+    let read = bstream.read(async function () {
+      callCount++
+      this.push(await nextTick(1))
+      pushCount++
+      this.push(await nextTick(2))
+      pushCount++
+    })
+    let sum = 0
+    read.on('data', data => {
+      sum += data
+    })
+    await nextTick()
+    await nextTick()
+    assert.equal(1, pushCount)
+    read.push(null)
     await bstream.wait(read)
     assert.equal(sum, 3)
     assert.equal(callCount, 1)
