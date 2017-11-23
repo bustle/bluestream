@@ -1,6 +1,7 @@
 # bluestream
 
-[![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream) [![Try bluestream on RunKit](https://badge.runkitcdn.com/bluestream.svg)](https://npm.runkit.com/bluestream)
+[![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream) [![Try bluestream on RunKit](https://badge.runkitcdn.com/bluestream.svg)](https://npm.runkit.com/bluestream) [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
+
 
 A collection of NodeJS Streams and stream utilities that work well with promises and async functions. Think `through2-concurrent` with promise support. The goal is to reduce the edge cases when mixing streams and promises. These are a little slower than normal streams but much more forgiving.
 
@@ -198,3 +199,7 @@ events are emitted by the stream.
 For `ReduceStreams`, the promise is for the final reduction result. Any
 stream errors or exceptions encountered while reducing will result with a
 rejection of the promise.
+
+# Releasing
+
+We use [semantic release](https://github.com/semantic-release/semantic-release) and the angular commit message format. If you commit a breaking change to master a release will be published.
