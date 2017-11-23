@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream) [![Try bluestream on RunKit](https://badge.runkitcdn.com/bluestream.svg)](https://npm.runkit.com/bluestream)
 
-A collection of NodeJS Streams and stream utilities that work well with promises and async functions. The goal is to reduce the edge cases when mixing streams and promises. These are a little bit slower than normal streams however they are much more forgiving.
+A collection of NodeJS Streams and stream utilities that work well with promises and async functions. Think `through2-concurrent` with promise support. The goal is to reduce the edge cases when mixing streams and promises. These are a little slower than normal streams but much more forgiving.
 
 Originally forked from [promise-streams](https://github.com/spion/promise-streams) but with some different goals and a lot more tests. Named after bluebird but not actually using bluebird. (Though we work great with it, highly recommended!)
 

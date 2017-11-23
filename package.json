@@ -1,7 +1,7 @@
 {
   "name": "bluestream",
   "version": "6.0.3",
-  "description": "A collection of streams that work well with promises (through, map, reduce)",
+  "description": "A collection of streams that work well with promises (through, map, reduce). Through2 with promise support",
   "main": "dist",
   "repository": "git@github.com:bustle/bluestream.git",
   "homepage": "https://github.com/bustle/bluestream",
@@ -16,9 +16,12 @@
   "keywords": [
     "through",
     "through2",
+    "through2-concurrent",
     "promise",
     "stream",
     "readable",
+    "writable",
+    "transform streams",
     "bluebird"
   ],
   "author": "reconbot",
@@ -29,7 +32,6 @@
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.0",
     "babel-register": "^6.26.0",
-    "blue-tape": "^0.1.10",
     "chai": "^4.1.0",
     "eslint": "^4.3.0",
     "eslint-config-standard": "^10.2.1",
@@ -39,7 +41,7 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
     "mocha": "^3.5.0",
-    "split2": "^1.0.0"
+    "split2": "^2.2.0"
   },
   "engines": {
     "node": ">=6"
