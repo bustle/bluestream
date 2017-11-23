@@ -1,6 +1,6 @@
 {
   "name": "bluestream",
-  "version": "6.0.3",
+  "version": "0.0.0-development",
   "description": "A collection of streams that work well with promises (through, map, reduce). Through2 with promise support",
   "main": "dist",
   "repository": "git@github.com:bustle/bluestream.git",
@@ -11,7 +11,8 @@
     "unit-test": "mocha",
     "lint": "eslint lib test",
     "build": "babel lib/ -d dist/",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "keywords": [
     "through",
@@ -41,7 +42,8 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
     "mocha": "^3.5.0",
-    "split2": "^2.2.0"
+    "split2": "^2.2.0",
+    "semantic-release": "^8.2.0"
   },
   "engines": {
     "node": ">=6"
