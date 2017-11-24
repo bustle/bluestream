@@ -21,6 +21,7 @@
     "promise",
     "stream",
     "readable",
+    "transform",
     "writable",
     "transform streams",
     "bluebird"
