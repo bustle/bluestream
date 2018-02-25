@@ -3,6 +3,7 @@
   "version": "0.0.0-development",
   "description": "A collection of streams that work well with promises (through, map, reduce). Through2 with promise support",
   "main": "dist",
+  "types": "dist/index.d.ts",
   "repository": "git@github.com:bustle/bluestream.git",
   "homepage": "https://github.com/bustle/bluestream",
   "runkitExampleFilename": "example.js",
@@ -10,7 +11,7 @@
     "test": "npm run unit-test && npm run lint",
     "unit-test": "mocha",
     "lint": "eslint lib test",
-    "build": "babel lib/ -d dist/",
+    "build": "babel lib/ -d dist/ && cp ./types/index.d.ts ./dist/index.d.ts",
     "prepublish": "npm run build",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
