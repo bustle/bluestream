@@ -1,8 +1,3 @@
-// Type definitions for bluestream 6.1
-// Project: https://github.com/bustle/bluestream
-// Definitions by: My Self <https://github.com/me>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-
 interface DeferReturn {
   resolve: Function,
   reject: Function,
