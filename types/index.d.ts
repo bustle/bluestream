@@ -15,9 +15,7 @@ export class ReadStream {
 
   promise(): Promise<any>;
 
-  push(...args: any[]): void;
-
-  static ReadableState(options: any, stream: any): void;
+  push(...args: any[]): Promise<any>;
 }
 
 export class ReduceStream {
@@ -35,7 +33,7 @@ export class TransformStream {
 
   promise(): Promise<any>;
 
-  push(...args: any[]): void;
+  push(...args: any[]): Promise<any>;
 }
 
 export class WriteStream {
@@ -52,22 +50,20 @@ export class WriteStream {
 
 export function collect(stream: ReadStream|WriteStream|TransformStream): any[];
 
-export function filter(opts: object, fn?: Function): void;
+export function filter(opts: object, fn?: Function): any[];
 
-export function map(opts: object, fn?: Function): void;
+export function map(opts: object, fn?: Function): any[];
 
-export function pipe(...streams: (ReadStream|WriteStream|TransformStream)[]): any;
+export function pipe(...streams: (ReadStream|WriteStream|TransformStream)[]): Promise<any>;
 
-export function read(opts: object, readFn: Function): void;
+export function read(opts: object, readFn: Function): ReadStream;
 
-export function reduce(opts: object, fn?: Function, initial?: any): void;
+export function reduce(opts: object, fn?: Function, initial?: any): any[];
 
-export function transform(opts: object, fn?: Function): void;
+export function transform(opts: object, fn?: Function): TransformStream;
 
 export function wait(stream: any): Promise<ReadStream|WriteStream|TransformStream>;
 
 export function maybeResume(stream: ReadStream|WriteStream|TransformStream): Promise<ReadStream|WriteStream|TransformStream>;
 
-export function defer(): DeferReturn;
-
-export function write(opts: object, writeFn: Function): void;
+export function write(opts: object, writeFn: Function): WriteStream;
