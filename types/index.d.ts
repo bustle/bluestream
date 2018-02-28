@@ -48,7 +48,7 @@ export class WriteStream {
   wait(...args: any[]): void;
 }
 
-export function collect(stream: ReadStream|WriteStream|TransformStream): any[];
+export function collect(stream: ReadStream|WriteStream|TransformStream): (any[]|Buffer|String|null);
 
 export function filter(opts: object, fn?: Function): any[];
 
