@@ -1,17 +1,21 @@
-interface DeferReturn {
+export interface DeferReturn {
   resolve: Function,
   reject: Function,
   promise: Promise<any>
 }
 
+export interface StreamOptions {
+  concurrent?: 1,
+  objectMode?: true,
+  [others: string]: any
+}
+
 export class FilterStream {
-  constructor(options: object, fn?: Function);
+  constructor(options: StreamOptions, fn?: Function);
 }
 
 export class ReadStream {
-  constructor(options: object, fn?: Function);
-
-  emitError(...args: any[]): void;
+  constructor(options: StreamOptions, fn?: Function);
 
   promise(): Promise<any>;
 
@@ -19,15 +23,13 @@ export class ReadStream {
 }
 
 export class ReduceStream {
-  constructor(options: object, fn?: Function);
+  constructor(options: StreamOptions, fn?: Function);
 
   promise(): Promise<any>;
 }
 
 export class TransformStream {
-  constructor(options: object, fn?: Function);
-
-  emitError(e: Error): void;
+  constructor(options: StreamOptions, fn?: Function);
 
   end(chunk: any, encoding: string, cb: Function): void;
 
@@ -37,9 +39,7 @@ export class TransformStream {
 }
 
 export class WriteStream {
-  constructor(options: object, fn?: Function);
-
-  emitError(...args: any[]): void;
+  constructor(options: StreamOptions, fn?: Function);
 
   end(chunk: any, encoding: string, cb: Function): void;
 
@@ -50,20 +50,18 @@ export class WriteStream {
 
 export function collect(stream: ReadStream|WriteStream|TransformStream): (any[]|Buffer|String|null);
 
-export function filter(opts: object, fn?: Function): any[];
+export function filter(opts: StreamOptions, fn?: Function): FilterStream;
 
-export function map(opts: object, fn?: Function): any[];
+export function map(opts: StreamOptions, fn?: Function): TransformStream;
 
-export function pipe(...streams: (ReadStream|WriteStream|TransformStream)[]): Promise<any>;
+export function pipe(...streams: (ReadStream|WriteStream|TransformStream)[]): Promise<void>;
 
-export function read(opts: object, readFn: Function): ReadStream;
+export function read(opts: StreamOptions, readFn: Function): ReadStream;
 
-export function reduce(opts: object, fn?: Function, initial?: any): any[];
+export function reduce(opts: StreamOptions, fn?: Function, initial?: any): ReduceStream;
 
-export function transform(opts: object, fn?: Function): TransformStream;
+export function transform(opts: StreamOptions, fn?: Function): TransformStream;
 
 export function wait(stream: any): Promise<ReadStream|WriteStream|TransformStream>;
 
-export function maybeResume(stream: ReadStream|WriteStream|TransformStream): Promise<ReadStream|WriteStream|TransformStream>;
-
-export function write(opts: object, writeFn: Function): WriteStream;
+export function write(opts: StreamOptions, writeFn: Function): WriteStream;
