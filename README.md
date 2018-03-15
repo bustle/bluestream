@@ -13,9 +13,10 @@ Originally forked from [promise-streams](https://github.com/spion/promise-stream
 - `FilterStream` similar to `Array.prototype.filter` Easy stream filtering of data
 - `ReduceStream` similar to `Array.prototype.reduce` but a stream that emits each step and `.promise()` resolves to the end result
 
-- `bstream.wait(stream)` resolves when the stream finishes
-- `bstream.collect(stream)` Concats strings and buffers, returns an array of objects.
-- `bstream.pipe(source, target, [target,])` Returns a promise for when the last target stream finishes
+- `bluestream.wait(stream)` resolves when the stream finishes
+- `bluestream.collect(stream)` Concats strings and buffers, returns an array of objects.
+- `bluestream.readAsync(stream, numberOfBytesOrObjects)` Reads a number of bytes or objects from a stream
+- `bluestream.pipe(source, target, [target,])` Returns a promise for when the last target stream finishes
 
 # Examples
 
@@ -142,7 +143,7 @@ Options:
 
 The other options are also passed to node's Write stream constructor.
 
-#### ps.filter
+#### filter
 
 `([opts:Options,] fn: async (data[, enc]) => boolean) => FilterStream`
 
@@ -151,7 +152,7 @@ indicate whether the data value should pass to the next stream
 
 Options: Same as `ps.transform`
 
-#### ps.reduce
+#### reduce
 
 `([opts:Options,] fn: (acc, data[, enc]) => Promise) => ReduceStream`
 
@@ -170,24 +171,30 @@ process.stdin.pipe(split()).pipe(es.reduce(function(acc, el) {
 });
 ```
 
-#### ps.wait
+#### wait
 
 `(s: Stream) => Promise`
 
 Wait for the stream to end. Also captures errors.
 
-#### ps.pipe
+#### pipe
 
 `(source: Stream, destination: Stream) => Promise`
 
 Pipes s1 to s2 and forwards all errors to the resulting promise. The promise is
 fulfilled without a value when the destination stream ends.
 
-#### ps.collect
+#### collect
 
 `(source: Stream) => Promise`
 
 Returns a Buffer, string or array of all the data events concatenated together. If no events null is returned.
+
+#### readAsync
+
+`(source: Stream, count: Number) => Promise`
+
+Returns a count of bytes in a Buffer, characters in a string or objects in an array. If no data before the stream ends null is returned.
 
 #### PromiseStream.promise
 

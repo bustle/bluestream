@@ -56,6 +56,8 @@ export function pipe(...streams: (ReadStream|WriteStream|TransformStream)[]): Pr
 
 export function read(opts: StreamOptions, readFn: Function): ReadStream;
 
+export function readAsync(stream: ReadableStream, count: Number): (Object[]|Buffer|String|null);
+
 export function reduce(opts: StreamOptions, fn?: Function, initial?: any): ReduceStream;
 
 export function transform(opts: StreamOptions, fn?: Function): TransformStream;
