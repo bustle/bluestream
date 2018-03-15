@@ -17,25 +17,25 @@ export class FilterStream {
 export class ReadStream {
   constructor(options: StreamOptions, fn?: Function);
 
-  promise(): Promise<any>;
+  promise(): Promise<void>;
 
-  push(...args: any[]): Promise<any>;
+  push(data: (any|Promise<any>)): Promise<void>;
 }
 
 export class ReduceStream {
   constructor(options: StreamOptions, fn?: Function);
 
-  promise(): Promise<any>;
+  promise(): Promise<void>;
 }
 
 export class TransformStream {
   constructor(options: StreamOptions, fn?: Function);
 
-  end(chunk: any, encoding: string, cb: Function): void;
+  end(chunk: any, encoding: string, cb: Function): Promise<void>;
 
-  promise(): Promise<any>;
+  promise(): Promise<void>;
 
-  push(...args: any[]): Promise<any>;
+  push(data: (any|Promise<any>)): Promise<void>;
 }
 
 export class WriteStream {
@@ -43,12 +43,10 @@ export class WriteStream {
 
   end(chunk: any, encoding: string, cb: Function): void;
 
-  promise(): Promise<any>;
-
-  wait(...args: any[]): void;
+  promise(): Promise<void>;
 }
 
-export function collect(stream: ReadStream|WriteStream|TransformStream): (any[]|Buffer|String|null);
+export function collect(stream: ReadStream|WriteStream|TransformStream): (Object[]|Buffer|String|null);
 
 export function filter(opts: StreamOptions, fn?: Function): FilterStream;
 
@@ -62,6 +60,6 @@ export function reduce(opts: StreamOptions, fn?: Function, initial?: any): Reduc
 
 export function transform(opts: StreamOptions, fn?: Function): TransformStream;
 
-export function wait(stream: any): Promise<ReadStream|WriteStream|TransformStream>;
+export function wait(stream: any): Promise<void>;
 
 export function write(opts: StreamOptions, writeFn: Function): WriteStream;
