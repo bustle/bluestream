@@ -194,7 +194,7 @@ Returns a Buffer, string or array of all the data events concatenated together. 
 
 `(source: Stream, count: Number) => Promise`
 
-Returns a count of bytes in a Buffer, characters in a string or objects in an array. If no data before the stream ends null is returned.
+Returns a count of bytes in a Buffer, characters in a string or objects in an array. If no data arrives before the stream ends `null` is returned.
 
 #### PromiseStream.promise
 
