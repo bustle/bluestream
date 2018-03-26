@@ -1,6 +1,7 @@
+import { assert } from 'chai'
 import { Readable } from 'stream'
-import { defer } from '../lib/utils'
 import * as bstream from '../lib'
+import { defer } from '../lib/utils'
 
 function objects () {
   const arr = [1, 2, 3, 4, 5, 6]
@@ -38,7 +39,7 @@ describe('TransformStream', () => {
         this.push(data)
       }
     }
-    const transform = new MyTransform()
+    const transform = new MyTransform({})
     let sum = 0
     transform.on('data', data => {
       sum += data
@@ -81,7 +82,7 @@ describe('TransformStream', () => {
   })
 
   it('pushes a promise return', async () => {
-    let transform = bstream.transform(async function (data) {
+    let transform = bstream.transform(async data => {
       return data
     })
     let sum = 0

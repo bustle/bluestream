@@ -1,17 +1,18 @@
+import { Readable } from 'stream'
 import { defer } from './utils'
 
-const readOnceAsync = async (stream, count) => {
+const readOnceAsync = async (stream: Readable, count?: number) => {
   const data = stream.read(count)
   if (data !== null) {
     return data
   }
   return new Promise(resolve => {
     stream.once('readable', () => {
-      const data = stream.read(count)
-      if (data === null) {
+      const nextData = stream.read(count)
+      if (nextData === null) {
         return resolve(stream.read())
       }
-      resolve(data)
+      resolve(nextData)
     })
   })
 }
@@ -21,7 +22,8 @@ export const readAsync = async (stream, count) => {
     throw new TypeError('"stream" is not a readable stream')
   }
   if (stream._readableState.flowing) {
-    throw new TypeError('"stream" is in flowing mode, this is probably not what you want as data loss could occur. Please use stream.pause() to pause the stream before calling readAsync.')
+    // tslint:disable-next-line
+    throw new TypeError('"stream" is in flowing mode, this is probably not what you want as data loss could occur. Please use stream.pause() to pause the stream before calling readAsync.');
   }
 
   const objectMode = stream._readableState.objectMode

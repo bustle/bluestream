@@ -1,5 +1,6 @@
+import { assert } from 'chai'
 import { Readable } from 'stream'
-import * as bstream from '../lib'
+import { collect, reduce } from '../lib'
 
 function objects () {
   const arr = [1, 2, 3, 4, 5, 6]
@@ -13,16 +14,16 @@ function objects () {
 
 describe('ReduceStream', () => {
   it('.promise() resolves the end result', async () => {
-    const reduce = bstream.reduce(async (acc, el) => acc + el.value, 0)
-    objects().pipe(reduce)
-    const total = await reduce.promise()
+    const stream = reduce(async (acc, el) => acc + el.value, 0)
+    objects().pipe(stream)
+    const total = await stream.promise()
     assert.equal(total, 21)
   })
 
   it('emits the accumulator as it processes', async () => {
-    const reduce = bstream.reduce(async (acc, el) => acc + el.value, 0)
-    objects().pipe(reduce)
-    const totals = await bstream.collect(reduce)
+    const stream = reduce(async (acc, el) => acc + el.value, 0)
+    objects().pipe(stream)
+    const totals = await collect(stream)
     assert.deepEqual(totals, [1, 3, 6, 10, 15, 21])
   })
 })
