@@ -1,7 +1,8 @@
+import { Readable, Writable } from 'stream'
 import { defer } from './utils'
 
-export async function pipe () {
-  const streams = Array.from(arguments)
+export async function pipe (readable: Readable, ...writableStreams: Writable[]) {
+  const streams = [readable, ...writableStreams]
   if (streams.length < 2) {
     throw new TypeError('Must pipe to two or more streams')
   }
@@ -13,7 +14,7 @@ export async function pipe () {
     const lastStream = index + 1 === streams.length
     if (!lastStream) {
       const nextStream = streams[index + 1]
-      stream.pipe(nextStream)
+      stream.pipe((nextStream as Writable))
     }
   })
 

@@ -1,8 +1,9 @@
 package-lock.json
 .nvmrc
 test
-.babelrc
 .gitignore
 .travis.yml
 lib
 .vscode
+tsconfig.json
+tslint.json

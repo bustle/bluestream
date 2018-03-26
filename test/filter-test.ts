@@ -1,5 +1,6 @@
+import { assert } from 'chai'
 import { Readable } from 'stream'
-import * as bstream from '../lib'
+import { collect, filter } from '../lib'
 
 function numbers () {
   const arr = [1, 2, 3, 4, 5, 6, null]
@@ -13,16 +14,16 @@ function numbers () {
 
 describe('FilterStream', () => {
   it('Filters based upon the passed in function', async () => {
-    const filter = bstream.filter(data => (data % 2) === 0)
-    numbers().pipe(filter)
-    const evenNumbers = await bstream.collect(filter)
+    const filterStream = filter(data => (data % 2) === 0)
+    numbers().pipe(filterStream)
+    const evenNumbers = await collect(filterStream)
     assert.deepEqual(evenNumbers, [2, 4, 6])
   })
 
   it('Filters based upon the passed in async function', async () => {
-    const filter = bstream.filter(async data => (data % 2) === 0)
-    numbers().pipe(filter)
-    const evenNumbers = await bstream.collect(filter)
+    const filterStream = filter(async data => (data % 2) === 0)
+    numbers().pipe(filterStream)
+    const evenNumbers = await collect(filterStream)
     assert.deepEqual(evenNumbers, [2, 4, 6])
   })
 })

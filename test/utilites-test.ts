@@ -1,14 +1,15 @@
-import fs from 'fs'
-import path from 'path'
-import split from 'split2'
+import { assert } from 'chai'
+import { createReadStream } from 'fs'
+import { join } from 'path'
+import * as split from 'split2'
 import { Readable } from 'stream'
-import * as bstream from '../lib'
+import { collect, filter, map, pipe, wait, write } from '../lib'
 
 function lines () {
   return rawString().pipe(split())
 }
 function rawString () {
-  return fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8')
+  return createReadStream(join(__dirname, 'test.txt'), 'utf8')
 }
 
 function objects () {
@@ -22,15 +23,13 @@ function objects () {
 }
 
 function nextTick () {
-  return new Promise(function (resolve, reject) {
-    process.nextTick(resolve)
-  })
+  return new Promise(resolve => process.nextTick(resolve))
 }
 
 describe('#wait', () => {
-  it('bstream.wait', async () => {
-    let last = 0
-    await bstream.wait(lines().pipe(bstream.map(async (el) => {
+  it('waits until the stream ends', async () => {
+    let last = '0'
+    await wait(lines().pipe(map(async el => {
       await nextTick()
       if (el) { last = el }
       return el
@@ -40,17 +39,17 @@ describe('#wait', () => {
 })
 
 describe('#collect', () => {
-  it('collect()', function () {
-    return bstream.collect(rawString()).then(function (data) {
+  it('collect()', () => {
+    return collect(rawString()).then(data => {
       assert.equal(data.length, 18 * 3, 'test.txt should be the correct size')
     })
   })
 
   it('collect(obj)', () => {
-    return bstream.collect(objects()).then(function (data) {
+    return collect(objects()).then(data => {
       assert.equal(data.length, 6, 'array of objects should be the correct size')
       assert.deepEqual(data, [
-        { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }, { value: 6 }
+        { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }, { value: 6 },
       ])
     })
   })
@@ -60,21 +59,21 @@ describe('#pipe', () => {
   it('pipes multiple streams together', async () => {
     const numbers = []
     const extract = objects()
-    const transform = bstream.filter(({ value }) => value % 2 === 0)
-    const load = bstream.write(({ value }) => numbers.push(value))
+    const transform = filter(({ value }) => value % 2 === 0)
+    const load = write(({ value }) => { numbers.push(value) })
 
-    await bstream.pipe(extract, transform, load)
+    await pipe(extract, transform, load)
     assert.deepEqual(numbers, [2, 4, 6])
   })
 })
 
 describe('error', () => {
-  it('error', async function () {
-    await lines().pipe(bstream.map(async (el) => {
+  it('error', async () => {
+    await lines().pipe(map(async el => {
       throw new Error('Oops')
-    })).promise().then(function (val) {
+    })).promise().then(val => {
       assert.ok(false, 'should not execute')
-    }, function (e) {
+    }, e => {
       assert.ok(e, 'should be rejected')
     })
   })

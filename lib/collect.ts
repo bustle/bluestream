@@ -1,9 +1,9 @@
-import { write } from './write'
 import { pipe } from './pipe'
+import { write } from './write'
 
 export async function collect (stream) {
   const acc = []
-  await pipe(stream, write(data => acc.push(data)))
+  await pipe(stream, write(data => { acc.push(data) }))
   if (acc.length === 0) {
     return null
   }

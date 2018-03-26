@@ -1,17 +1,18 @@
-import fs from 'fs'
-import path from 'path'
-import { readAsync, read, write, collect } from '../lib'
+import { assert } from 'chai'
+import { createReadStream } from 'fs'
+import { join } from 'path'
+import { collect, read, readAsync, write } from '../lib'
 
 function nextTick (data) {
   return new Promise(resolve => process.nextTick(() => resolve(data)))
 }
 
 function bufferStream () {
-  return fs.createReadStream(path.join(__dirname, 'test.txt'))
+  return createReadStream(join(__dirname, 'test.txt'))
 }
 
 function stringStream () {
-  return fs.createReadStream(path.join(__dirname, 'test.txt'), 'utf8')
+  return createReadStream(join(__dirname, 'test.txt'), 'utf8')
 }
 
 function objectStream (arr = [1, 2, 3, 4, 5, 6]) {

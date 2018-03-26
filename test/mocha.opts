@@ -1,3 +1,4 @@
 --bail
---require babel-register
+--require ts-node/register
 --require chai/register-assert
+test/*.ts
