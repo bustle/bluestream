@@ -50,7 +50,7 @@ console.log('caught them all')
 
 #### ReadStream
 
-Create a read-promise stream. Pass it a function that takes the number of bytes or objects of wanted data and and uses `this.push` or `return` to push values or promises. This function should return a promise that indicates when the object/chunk are fully processed. Return `null` to end the stream.
+Create a read-promise stream. Pass it a function that takes the number of bytes or objects of wanted data and and uses `this.push` or `return` to push values or promises. This function should return a promise that indicates when the object/chunk are fully processed. Return or push `null` to end the stream.
 
 Options:
   * `read` - An optional way to pass the read function
@@ -70,8 +70,8 @@ A `ReadStream` works like a normal `ReadableStream` but the `_read` and `push()`
 - Pushes any non `undefined` return values
 
 `this.push()`
-- Can be pushed a promise
-- Returns a promise
+- Can be pushed a promise, which will be resolved and then pushed as normal
+- returns true or false like a normal stream's push
 
 This allows you to use it in some friendly ways.
 
