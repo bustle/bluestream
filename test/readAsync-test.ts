@@ -3,8 +3,8 @@ import { createReadStream } from 'fs'
 import { join } from 'path'
 import { collect, read, readAsync, write } from '../lib'
 
-function nextTick (data) {
-  return new Promise(resolve => process.nextTick(() => resolve(data)))
+function promiseImmediate (data?) {
+  return new Promise(resolve => setImmediate(() => resolve(data)))
 }
 
 function bufferStream () {
@@ -79,20 +79,21 @@ describe('#readAsync', () => {
     assert.isNull(await readAsync(stream, 5))
     assert.equal(stream._eventsCount, 1)
   })
-  it('rejects if the stream errors', async () => {
+  it('rejects if the stream errors', () => {
     const stream = read(() => 1)
     const error = new Error('Foo!')
-    nextTick().then(() => stream.emit('error', error))
-    await readAsync(stream, 5).then(() => {
+    const assertion = readAsync(stream, 5).then(() => {
       assert.isTrue(false, 'The promise should have rejected')
     }, err => {
       assert.isNotNull(err)
       assert.deepEqual(err, error)
       assert.equal(stream._eventsCount, 1)
     })
+    stream.emit('error', error)
+    return assertion
   })
   it('rejects if the stream is already in flowing mode', async () => {
-    const stream = read(() => nextTick(1))
+    const stream = read(() => promiseImmediate(1))
     stream.resume()
     await readAsync(stream, 1).then(() => {
       assert.isTrue(false, 'The promise should have rejected')
