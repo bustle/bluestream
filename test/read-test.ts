@@ -1,8 +1,8 @@
 import { assert } from 'chai'
 import { read, ReadStream, wait } from '../lib'
 
-function nextTick (data?) {
-  return new Promise(resolve => process.nextTick(() => resolve(data)))
+function promiseImmediate (data?) {
+  return new Promise(resolve => setImmediate(() => resolve(data)))
 }
 
 describe('ReadStream', () => {
@@ -118,8 +118,8 @@ describe('ReadStream', () => {
     let callCount = 0
     const stream = read(function () {
       callCount++
-      this.push(nextTick(1))
-      this.push(nextTick(2))
+      this.push(promiseImmediate(1))
+      this.push(promiseImmediate(2))
       return null
     })
     let sum = 0
@@ -135,8 +135,8 @@ describe('ReadStream', () => {
     let callCount = 0
     const stream = read(function () {
       callCount++
-      this.push(nextTick(1))
-      this.push(nextTick(2))
+      this.push(promiseImmediate(1))
+      this.push(promiseImmediate(2))
       this.push(null)
     })
     let sum = 0
@@ -153,17 +153,17 @@ describe('ReadStream', () => {
     let pushCount = 0
     const stream = read(async function () {
       callCount++
-      this.push(await nextTick(1))
+      this.push(await promiseImmediate(1))
       pushCount++
-      this.push(await nextTick(2))
+      this.push(await promiseImmediate(2))
       pushCount++
     })
     let sum = 0
     stream.on('data', data => {
       sum += data
     })
-    await nextTick()
-    await nextTick()
+    await promiseImmediate()
+    await promiseImmediate()
     assert.equal(1, pushCount)
     stream.push(null)
     await wait(stream)

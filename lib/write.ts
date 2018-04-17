@@ -83,7 +83,7 @@ export class WriteStream extends Writable implements IBluestream {
         return this.end(cb)
       }
       if ((this as any)._writableState.pendingcb > 0) {
-        return process.nextTick(() => this.end(cb))
+        return setImmediate(() => this.end(cb))
       }
       Writable.prototype.end.call(this, cb)
     } catch (err) {

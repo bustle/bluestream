@@ -24,12 +24,26 @@ function numbers () {
     }})
 }
 
+function manyNumbers () {
+  let count = 0
+  return bstream.read(function () {
+    const arr = []
+    for (let index = 0; index < 2000; index++) {
+      arr.push(count++)
+    }
+    this.push(arr)
+    if (count > 100000) {
+      this.push(null)
+    }
+  })
+}
+
 function delay (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-function nextTick () {
-  return new Promise(resolve => process.nextTick(resolve))
+function promiseImmediate (data?) {
+  return new Promise(resolve => setImmediate(() => resolve(data)))
 }
 
 describe('TransformStream', () => {
@@ -122,7 +136,7 @@ describe('TransformStream', () => {
   })
 
   it('handles sync errors', async () => {
-    let transform = bstream.transform(() => { throw new Error("I'm an Error") })
+    const transform = bstream.transform(() => { throw new Error("I'm an Error") })
     const transformPromise = transform.promise()
     transform.write(4)
     await transformPromise.then(() => {
@@ -166,8 +180,8 @@ describe('TransformStream', () => {
 
   it('supports writable objects and readable buffers', async () => {
     let transform = new bstream.TransformStream({
-      writableObjectMode: true,
       readableObjectMode: false,
+      writableObjectMode: true,
       transform ({ value }) {
         const data = value.toString()
         this.push(data)
@@ -181,7 +195,7 @@ describe('TransformStream', () => {
   it('allows for concurrent operations', async () => {
     // resolve the promise from the deferred on the 2nd data event
     const defered = defer()
-    let transform = bstream.transform({ concurrent: 2 }, async data => {
+    const transform = bstream.transform({ concurrent: 2 }, async data => {
       if (data === 1) {
         return defered.promise
       }
@@ -219,11 +233,11 @@ describe('TransformStream', () => {
 
   it('ensures all concurrent operations finish before ending', async () => {
     let finished = 0
-    const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null]
+    const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null]
     const source = bstream.read(async function () {
-      await nextTick()
-      this.push(numbers.shift())
-      this.push(numbers.shift())
+      await promiseImmediate()
+      this.push(nums.shift())
+      this.push(nums.shift())
     })
     const sink = bstream.transform({ concurrent: 6 }, async num => {
       await delay(num)
@@ -231,5 +245,11 @@ describe('TransformStream', () => {
     })
     await bstream.pipe(source, sink)
     assert.equal(finished, 11)
+  })
+
+  it('handles pushing more than the buffer in a single read', async () => {
+    await bstream.pipe(manyNumbers(), bstream.transform(function (nums) {
+      nums.forEach(num => this.push(num))
+    }), bstream.write(i => i))
   })
 })

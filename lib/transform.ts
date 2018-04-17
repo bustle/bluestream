@@ -104,7 +104,7 @@ export class TransformStream extends Transform implements IBluestream {
         return this.end(cb)
       }
       if ((this as any)._writableState.pendingcb > 0) {
-        process.nextTick(() => this.end(cb))
+        setImmediate(() => this.end(cb))
         return
       }
       Transform.prototype.end.call(this, cb)

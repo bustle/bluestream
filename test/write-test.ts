@@ -1,6 +1,6 @@
 import { Readable } from 'stream'
-import { defer } from '../lib/utils'
 import * as bstream from '../lib'
+import { defer } from '../lib/utils'
 
 function numbers (num = 6) {
   const arr = [...new Array(num)].map((val, i) => i + 1)
@@ -12,7 +12,7 @@ function numbers (num = 6) {
       if (value % 2 === 0) {
         this.push(value)
       } else {
-        process.nextTick(() => this.push(value))
+        setImmediate(() => this.push(value))
       }
     }})
 }
@@ -21,8 +21,8 @@ function delay (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-function nextTick () {
-  return new Promise(resolve => process.nextTick(resolve))
+function promiseImmediate (data?) {
+  return new Promise(resolve => setImmediate(() => resolve(data)))
 }
 
 describe('WriteStream', () => {
@@ -105,7 +105,7 @@ describe('WriteStream', () => {
     let finished = 0
     const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null]
     const source = bstream.read(async function () {
-      await nextTick()
+      await promiseImmediate()
       this.push(numbers.shift())
       this.push(numbers.shift())
     })

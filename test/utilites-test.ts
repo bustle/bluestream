@@ -22,15 +22,15 @@ function objects () {
     }})
 }
 
-function nextTick () {
-  return new Promise(resolve => process.nextTick(resolve))
+function promiseImmediate (data?) {
+  return new Promise(resolve => setImmediate(() => resolve(data)))
 }
 
 describe('#wait', () => {
   it('waits until the stream ends', async () => {
     let last = '0'
     await wait(lines().pipe(map(async el => {
-      await nextTick()
+      await promiseImmediate()
       if (el) { last = el }
       return el
     })))
