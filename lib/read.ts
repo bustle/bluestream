@@ -1,5 +1,7 @@
 import { Readable, ReadableOptions } from 'stream'
 import { IBluestream } from './interfaces'
+import { internalIterator } from './iterate'
+import { readAsync } from './readAsync'
 import { defer, maybeResume } from './utils'
 
 async function readHandler (bytes) {
@@ -111,6 +113,10 @@ export class ReadStream extends Readable implements IBluestream {
     maybeResume(this)
     return this.streamEnd.promise
   }
+}
+
+ReadStream.prototype[(Symbol as any).asyncIterator] = function () {
+  return internalIterator(this)
 }
 
 export const read =

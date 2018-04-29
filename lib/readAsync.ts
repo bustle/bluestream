@@ -6,6 +6,9 @@ const readOnceAsync = async (stream: Readable, count?: number) => {
   if (data !== null) {
     return data
   }
+  if ((stream as any)._readableState.ended) {
+    return null
+  }
   return new Promise(resolve => {
     stream.once('readable', () => {
       const nextData = stream.read(count)
@@ -17,17 +20,10 @@ const readOnceAsync = async (stream: Readable, count?: number) => {
   })
 }
 
-export const readAsync = async (stream, count) => {
-  if (!(stream && stream._readableState)) {
-    throw new TypeError('"stream" is not a readable stream')
-  }
-  if (stream._readableState.flowing) {
-    // tslint:disable-next-line
-    throw new TypeError('"stream" is in flowing mode, this is probably not what you want as data loss could occur. Please use stream.pause() to pause the stream before calling readAsync.');
-  }
-
-  const objectMode = stream._readableState.objectMode
+const internalReadAsync = async (stream: Readable, count?: number) => {
   const { resolve, reject, promise } = defer()
+  const readableState = (stream as any)._readableState
+  const objectMode = readableState && readableState.objectMode
 
   const cleanup = () => {
     stream.removeListener('error', reject)
@@ -56,4 +52,25 @@ export const readAsync = async (stream, count) => {
     return data
   }
   return promise
+}
+
+const inflightReads = new WeakMap()
+export const readAsync = async (stream: Readable, count?: number) => {
+  if (!(stream && (stream as any)._readableState)) {
+    throw new TypeError('"stream" is not a readable stream')
+  }
+  if ((stream as any)._readableState.flowing) {
+    // tslint:disable-next-line
+    throw new TypeError('"stream" is in flowing mode, this is probably not what you want as data loss could occur. Please use stream.pause() to pause the stream before calling readAsync.');
+  }
+
+  const inflightRead = inflightReads.get(stream)
+  if (inflightRead) {
+    const queuedRead = inflightRead.then(() => internalReadAsync(stream, count))
+    inflightReads.set(stream, queuedRead)
+    return queuedRead
+  }
+  const readOperation = internalReadAsync(stream, count)
+  inflightReads.set(stream, readOperation)
+  return readOperation
 }

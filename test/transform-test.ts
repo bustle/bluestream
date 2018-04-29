@@ -147,7 +147,7 @@ describe('TransformStream', () => {
   })
 
   it('handles async errors', async () => {
-    let transform = bstream.transform(async () => { throw new Error("I'm an Error") })
+    const transform = bstream.transform(async () => { throw new Error("I'm an Error") })
     const transformPromise = transform.promise()
     transform.write(4)
     await transformPromise.then(() => {
@@ -158,7 +158,7 @@ describe('TransformStream', () => {
   })
 
   it('handles pushing rejected promises', async () => {
-    let transform = bstream.transform(function () {
+    const transform = bstream.transform(function () {
       this.push(Promise.reject(new Error("I'm an Error")))
     })
     const transformPromise = transform.promise()
@@ -172,14 +172,14 @@ describe('TransformStream', () => {
 
   it('#promise()', async () => {
     let count = 0
-    let transform = bstream.transform(data => count++)
+    const transform = bstream.transform(data => count++)
     numbers().pipe(transform)
     await transform.promise()
     assert.equal(count, 6)
   })
 
   it('supports writable objects and readable buffers', async () => {
-    let transform = new bstream.TransformStream({
+    const transform = new bstream.TransformStream({
       readableObjectMode: false,
       writableObjectMode: true,
       transform ({ value }) {
