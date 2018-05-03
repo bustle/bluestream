@@ -1,5 +1,6 @@
 import { collect } from './collect'
 import { filter, FilterStream } from './filter'
+import { iterate } from './iterate'
 import { pipe } from './pipe'
 import { IReadableStreamOptions, read, readFunction, ReadStream } from './read'
 import { readAsync } from './readAsync'
@@ -29,24 +30,7 @@ export {
   WriteStream,
   collect,
   filter,
-  map,
-  pipe,
-  read,
-  readAsync,
-  reduce,
-  transform,
-  wait,
-  write,
-}
-
-export default {
-  FilterStream,
-  ReadStream,
-  ReduceStream,
-  TransformStream,
-  WriteStream,
-  collect,
-  filter,
+  iterate,
   map,
   pipe,
   read,

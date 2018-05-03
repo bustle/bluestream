@@ -1,5 +1,16 @@
 import { assert } from 'chai'
+import { createReadStream } from 'fs'
+import { join } from 'path'
 import { read, ReadStream, wait } from '../lib'
+
+function stringStream () {
+  return createReadStream(join(__dirname, 'small-text.txt'), 'utf8')
+}
+
+function bufferStream () {
+  const values = [Buffer.from('12'), Buffer.from('3'), Buffer.from('4'), null]
+  return read({ objectMode: false }, () => values.shift())
+}
 
 function promiseImmediate (data?) {
   return new Promise(resolve => setImmediate(() => resolve(data)))
@@ -26,7 +37,7 @@ describe('ReadStream', () => {
       const stream = new MyRead()
       let sum = 0
       stream.on('data', data => {
-        sum += data
+        sum += (data as any)
       })
       await wait(stream)
       assert.equal(sum, 6)
@@ -40,7 +51,7 @@ describe('ReadStream', () => {
     })
     let sum = 0
     stream.on('data', data => {
-      sum += data
+      sum += (data as any)
     })
     await wait(stream)
     assert.equal(sum, 6)
@@ -53,7 +64,7 @@ describe('ReadStream', () => {
     })
     let sum = 0
     stream.on('data', data => {
-      sum += data
+      sum += (data as any)
     })
     await wait(stream)
     assert.equal(sum, 6)
@@ -66,7 +77,7 @@ describe('ReadStream', () => {
     })
     let sum = 0
     stream.on('data', data => {
-      sum += data
+      sum += (data as any)
     })
     await wait(stream)
     assert.equal(sum, 6)
@@ -79,7 +90,7 @@ describe('ReadStream', () => {
     })
     let sum = 0
     stream.on('data', data => {
-      sum += data
+      sum += (data as any)
     })
     await wait(stream)
     assert.equal(sum, 6)
@@ -92,7 +103,7 @@ describe('ReadStream', () => {
     })
     let sum = 0
     stream.on('data', data => {
-      sum += data
+      sum += (data as any)
     })
     await wait(stream)
     assert.equal(sum, 6)
@@ -108,7 +119,7 @@ describe('ReadStream', () => {
     })
     let sum = 0
     stream.on('data', data => {
-      sum += data
+      sum += (data as any)
     })
     await wait(stream)
     assert.equal(sum, 6)
@@ -124,7 +135,7 @@ describe('ReadStream', () => {
     })
     let sum = 0
     stream.on('data', data => {
-      sum += data
+      sum += (data as any)
     })
     await wait(stream)
     assert.equal(sum, 3)
@@ -141,7 +152,7 @@ describe('ReadStream', () => {
     })
     let sum = 0
     stream.on('data', data => {
-      sum += data
+      sum += (data as any)
     })
     await wait(stream)
     assert.equal(sum, 3)
@@ -160,7 +171,7 @@ describe('ReadStream', () => {
     })
     let sum = 0
     stream.on('data', data => {
-      sum += data
+      sum += (data as any)
     })
     await promiseImmediate()
     await promiseImmediate()
@@ -176,5 +187,25 @@ describe('ReadStream', () => {
     const stream = read(() => arr.shift())
     await stream.promise()
     assert.equal(arr.length, 0)
+  })
+
+  it('supports async iterators', async () => {
+    const arr = [1, 2, 3, null]
+    const stream = read(() => arr.shift())
+    const asyncArray = []
+    for await (const val of stream) {
+      asyncArray.push(val)
+    }
+    assert.deepEqual(asyncArray, [1, 2, 3])
+  })
+
+  it('supports async iterators with buffers', async () => {
+    const arr = [1, 2, 3, null]
+    const stream = bufferStream()
+    const valuesArray = []
+    for await (const val of stream) {
+      valuesArray.push(val)
+    }
+    assert.deepEqual(valuesArray, [Buffer.from('12'), Buffer.from('3'), Buffer.from('4')])
   })
 })
