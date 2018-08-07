@@ -1,6 +1,5 @@
 package-lock.json
 .nvmrc
-test
 .gitignore
 .travis.yml
 lib

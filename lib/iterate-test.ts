@@ -5,8 +5,8 @@ import { Readable } from 'stream'
 import { read, ReadStream, wait } from '../lib'
 import { iterate } from '../lib/'
 
-if ((Symbol as any).asyncIterator === undefined) {
-  ((Symbol as any).asyncIterator) = Symbol.for('asyncIterator')
+if (Symbol.asyncIterator === undefined) {
+  (Symbol as any).asyncIterator = Symbol.for('asyncIterator')
 }
 
 function nativeObjectStream () {
@@ -42,7 +42,7 @@ function promiseImmediate (data?) {
 describe('iterate', () => {
   it('iterates native object mode streams', async () => {
     const stream = nativeObjectStream()
-    const asyncArray = []
+    const asyncArray: any[] = []
     for await (const val of iterate(stream)) {
       asyncArray.push(val)
     }
@@ -50,7 +50,7 @@ describe('iterate', () => {
   })
   it('iterates native buffer mode streams', async () => {
     const stream = nativeBufferStream()
-    const asyncArray = []
+    const asyncArray: any[] = []
     for await (const val of iterate(stream)) {
       asyncArray.push(val)
     }
@@ -58,14 +58,14 @@ describe('iterate', () => {
   })
   it('iterates using a native iterator', async () => {
     const fakeStream = {
-      async *[(Symbol as any).asyncIterator] () {
+      async *[Symbol.asyncIterator] () {
         yield await promiseImmediate(1)
         yield await promiseImmediate(2)
         yield await promiseImmediate(3)
       },
     }
-    const asyncArray = []
-    for await (const val of iterate(fakeStream)) {
+    const asyncArray: any[] = []
+    for await (const val of iterate(fakeStream as Readable)) {
       asyncArray.push(val)
     }
     assert.deepEqual(asyncArray, [1, 2, 3])
@@ -74,7 +74,7 @@ describe('iterate', () => {
   it('supports async iterators', async () => {
     const arr = [1, 2, 3, null]
     const stream = read(() => arr.shift())
-    const asyncArray = []
+    const asyncArray: any[] = []
     for await (const val of stream) {
       asyncArray.push(val)
     }
@@ -83,10 +83,10 @@ describe('iterate', () => {
   it('supports async iterators with buffers', async () => {
     const arr = [1, 2, 3, null]
     const stream = bufferStream()
-    const valuesArray = []
+    const valuesArray: any[] = []
     for await (const val of stream) {
       valuesArray.push(val)
     }
-    assert.deepEqual(valuesArray, [Buffer.from('12'), Buffer.from('3'), Buffer.from('4')])
+    assert.deepEqual(Buffer.concat(valuesArray), Buffer.from('1234'))
   })
 })

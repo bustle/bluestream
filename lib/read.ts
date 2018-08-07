@@ -4,6 +4,10 @@ import { internalIterator } from './iterate'
 import { readAsync } from './readAsync'
 import { defer, maybeResume } from './utils'
 
+if (Symbol.asyncIterator === undefined) {
+  (Symbol as any).asyncIterator = Symbol.for('asyncIterator')
+}
+
 async function readHandler (bytes) {
   if (this.asyncReading) {
     return
@@ -115,7 +119,7 @@ export class ReadStream extends Readable implements IBluestream {
   }
 }
 
-ReadStream.prototype[(Symbol as any).asyncIterator] = function () {
+ReadStream.prototype[Symbol.asyncIterator] = function () {
   return internalIterator(this)
 }
 

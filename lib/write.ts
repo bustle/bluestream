@@ -17,7 +17,7 @@ async function writeHandler (data, encoding, done) {
   Promise.race(this.queue).then(() => done(), e => this.emitError(e))
 }
 
-export type writeFunction = (data: any, encoding: string) => Promise<void> | void
+export type writeFunction = (data: any, encoding: string) => Promise<void> | void | any
 
 export interface IWritableStreamOptions extends WritableOptions {
   concurrent?: number
@@ -31,16 +31,16 @@ export class WriteStream extends Writable implements IBluestream {
   private queue: Set<Promise<any>>
   private streamEnd
 
-  constructor (opts: IWritableStreamOptions | writeFunction, fn?: writeFunction) {
-    if (typeof opts === 'function') {
-      fn = opts
-      opts = {}
+  constructor (inputOpts: IWritableStreamOptions | writeFunction, fn?: writeFunction) {
+    if (typeof inputOpts === 'function') {
+      fn = inputOpts
+      inputOpts = {}
     }
 
-    opts = {
+    const opts = {
       concurrent: 1,
       ...fn && { write: fn },
-      ...opts,
+      ...inputOpts,
     }
 
     // only if the user hasn't suggested anything about object mode do we default to object mode

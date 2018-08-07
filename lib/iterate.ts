@@ -1,8 +1,8 @@
 import { Readable } from 'stream'
 import { readAsync } from '.'
 
-if ((Symbol as any).asyncIterator === undefined) {
-  ((Symbol as any).asyncIterator) = Symbol.for('asyncIterator')
+if (Symbol.asyncIterator === undefined) {
+  (Symbol as any).asyncIterator = Symbol.for('asyncIterator')
 }
 
 async function* iterateObjectMode (stream) {
@@ -35,8 +35,8 @@ export function internalIterator (stream: Readable) {
 }
 
 export function iterate (stream: Readable) {
-  if (stream[(Symbol as any).asyncIterator]) {
-    return stream[(Symbol as any).asyncIterator]()
+  if (stream[Symbol.asyncIterator]) {
+    return stream
   }
   const objectMode = (stream as any)._readableState.objectMode
   if (objectMode) {

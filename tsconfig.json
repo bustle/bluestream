@@ -5,16 +5,18 @@
     "target": "es2017",
     "moduleResolution": "node",
     "module": "commonjs",
-    "declaration": true
+    "declaration": true,
+    "strictNullChecks": true,
+    "lib": [
+      "es2017",
+      "esnext.asynciterable"
+    ]
   },
   "include": [
-    "lib/*.js",
     "lib/*.ts"
   ],
   "exclude": [
-    "node_modules"
-  ],
-  "lib": [
-    "esnext.asynciterable"
+    "node_modules",
+    "lib/*-test.ts"
   ]
 }

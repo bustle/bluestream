@@ -1,8 +1,9 @@
+import { Readable } from 'stream'
 import { pipe } from './pipe'
 import { write } from './write'
 
-export async function collect (stream) {
-  const acc = []
+export async function collect (stream: Readable) {
+  const acc: any[] = []
   await pipe(stream, write(data => { acc.push(data) }))
   if (acc.length === 0) {
     return null

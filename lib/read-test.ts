@@ -192,7 +192,7 @@ describe('ReadStream', () => {
   it('supports async iterators', async () => {
     const arr = [1, 2, 3, null]
     const stream = read(() => arr.shift())
-    const asyncArray = []
+    const asyncArray: any[] = []
     for await (const val of stream) {
       asyncArray.push(val)
     }
@@ -202,10 +202,10 @@ describe('ReadStream', () => {
   it('supports async iterators with buffers', async () => {
     const arr = [1, 2, 3, null]
     const stream = bufferStream()
-    const valuesArray = []
+    const valuesArray: any[] = []
     for await (const val of stream) {
       valuesArray.push(val)
     }
-    assert.deepEqual(valuesArray, [Buffer.from('12'), Buffer.from('3'), Buffer.from('4')])
+    assert.deepEqual(Buffer.concat(valuesArray), Buffer.from('1234'))
   })
 })
