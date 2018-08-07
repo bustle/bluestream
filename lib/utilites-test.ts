@@ -39,25 +39,23 @@ describe('#wait', () => {
 })
 
 describe('#collect', () => {
-  it('collect()', () => {
-    return collect(rawString()).then(data => {
-      assert.equal(data.length, 18 * 3, 'test.txt should be the correct size')
-    })
+  it('collect()', async () => {
+    const data = await collect(rawString())
+    assert.equal((data as string).length, 18 * 3, 'test.txt should be the correct size')
   })
 
-  it('collect(obj)', () => {
-    return collect(objects()).then(data => {
-      assert.equal(data.length, 6, 'array of objects should be the correct size')
-      assert.deepEqual(data, [
-        { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }, { value: 6 },
-      ])
-    })
+  it('collect(obj)', async () => {
+    const data = await collect(objects())
+    assert.equal((data as any[]).length, 6, 'array of objects should be the correct size')
+    assert.deepEqual(data, [
+      { value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }, { value: 5 }, { value: 6 },
+    ])
   })
 })
 
 describe('#pipe', () => {
   it('pipes multiple streams together', async () => {
-    const numbers = []
+    const numbers: any[] = []
     const extract = objects()
     const transform = filter(({ value }) => value % 2 === 0)
     const load = write(({ value }) => { numbers.push(value) })

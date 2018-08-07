@@ -18,7 +18,7 @@ describe('Integration scenarios', () => {
         return null
       }
     })
-    const ids = []
+    const ids: any[] = []
     const articleStream = bluestream.write({ concurrent: 20 }, id => {
       ids.push(id)
       return delay(100).then(() => id)

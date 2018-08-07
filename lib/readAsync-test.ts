@@ -77,7 +77,7 @@ describe('#readAsync', () => {
     const file = await collect(bufferStream())
     const stream = bufferStream()
     const readBytes = await readAsync(stream, 500)
-    assert.equal(readBytes.length, file.length)
+    assert.equal(readBytes.length, (file || '').length)
     assert.deepEqual(readBytes, file)
     assert.equal(countEvents(stream), 1)
   })

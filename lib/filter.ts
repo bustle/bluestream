@@ -7,15 +7,18 @@ export class FilterStream extends TransformStream {
 
   constructor (opts: ITransformStreamOptions | filterFunc, filterFunction?: filterFunc) {
     if (typeof opts === 'function') {
-      filterFunction = opts
-      opts = {}
+      super({})
+      this.filterFunction = opts
+    } else if (typeof filterFunction === 'function') {
+      super(opts)
+      this.filterFunction = filterFunction
+    } else {
+      throw TypeError('No "filterFunction" provided')
     }
-    super(opts)
-    this.filterFunction = filterFunction
   }
 
   public async _transform (data, encoding) {
-    const keep = await Promise.resolve(this.filterFunction(data, encoding))
+    const keep = await this.filterFunction(data, encoding)
     if (keep) {
       await this.push(data)
     }

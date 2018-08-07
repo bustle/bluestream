@@ -49,19 +49,17 @@ export class TransformStream extends Transform implements IBluestream {
   private queue: Set<Promise<any>>
   private streamEnd
   private doneThisTick: boolean
-  // tslint:disable-next-line
-  private _flush: (done: (err, data) => void) => void;
 
-  constructor (opts: ITransformStreamOptions | transformFunction, fn?: transformFunction) {
-    if (typeof opts === 'function') {
-      fn = opts
-      opts = {}
+  constructor (inputOpts: ITransformStreamOptions | transformFunction, fn?: transformFunction) {
+    if (typeof inputOpts === 'function') {
+      fn = inputOpts
+      inputOpts = {}
     }
 
-    opts = {
+    const opts = {
       concurrent: 1,
       ...fn && { transform: fn },
-      ...opts,
+      ...inputOpts,
     }
 
     // only if the user hasn't suggested anything about object mode do we default to object mode

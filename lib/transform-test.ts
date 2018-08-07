@@ -1,6 +1,6 @@
 import { assert } from 'chai'
 import { Readable } from 'stream'
-import * as bstream from '../lib'
+import { collect, pipe, read, transform, TransformStream, write } from '../lib'
 import { defer } from '../lib/utils'
 
 function objects () {
@@ -10,7 +10,7 @@ function objects () {
     read () {
       const value = arr.shift()
       this.push(value ? { value } : null)
-    }
+    },
   })
 }
 
@@ -26,8 +26,8 @@ function numbers () {
 
 function manyNumbers () {
   let count = 0
-  return bstream.read(function () {
-    const arr = []
+  return read(function () {
+    const arr: number[] = []
     for (let index = 0; index < 2000; index++) {
       arr.push(count++)
     }
@@ -48,97 +48,97 @@ function promiseImmediate (data?) {
 
 describe('TransformStream', () => {
   it('allows extension', async () => {
-    class MyTransform extends bstream.TransformStream {
-      _transform (data) {
+    class MyTransform extends TransformStream {
+      public _transform (data) {
         this.push(data)
       }
     }
-    const transform = new MyTransform({})
+    const stream = new MyTransform({})
     let sum = 0
-    transform.on('data', data => {
+    stream.on('data', data => {
       sum += data
     })
-    await bstream.pipe(numbers(), transform)
+    await pipe(numbers(), stream)
     assert.equal(sum, 21)
   })
   it('works with .push', async () => {
-    let transform = bstream.transform(function (data) {
+    const stream = transform(function (data) {
       this.push(data)
     })
     let sum = 0
-    transform.on('data', data => {
+    stream.on('data', data => {
       sum += data
     })
-    await bstream.pipe(numbers(), transform)
+    await pipe(numbers(), stream)
     assert.equal(sum, 21)
   })
 
   it('works with .push of a promise', async () => {
-    let transform = bstream.transform(function (data) {
+    const stream = transform(function (data) {
       this.push(Promise.resolve(data))
     })
     let sum = 0
-    transform.on('data', data => {
+    stream.on('data', data => {
       sum += data
     })
-    await bstream.pipe(numbers(), transform)
+    await pipe(numbers(), stream)
     assert.equal(sum, 21)
   })
 
   it('pushes a return value', async () => {
-    let transform = bstream.transform(data => data)
+    const stream = transform(data => data)
     let sum = 0
-    transform.on('data', data => {
+    stream.on('data', data => {
       sum += data
     })
-    await bstream.pipe(numbers(), transform)
+    await pipe(numbers(), stream)
     assert.equal(sum, 21)
   })
 
   it('pushes a promise return', async () => {
-    let transform = bstream.transform(async data => {
+    const stream = transform(async data => {
       return data
     })
     let sum = 0
-    transform.on('data', data => {
+    stream.on('data', data => {
       sum += data
     })
-    await bstream.pipe(numbers(), transform)
+    await pipe(numbers(), stream)
     assert.equal(sum, 21)
   })
 
   it('allows not returning a value', async () => {
-    let transform = bstream.transform(data => {
+    const stream = transform(data => {
       if (data !== 2) {
         return data
       }
     })
     let sum = 0
-    transform.on('data', data => {
+    stream.on('data', data => {
       sum += data
     })
-    await bstream.pipe(numbers(), transform)
+    await pipe(numbers(), stream)
     assert.equal(sum, 19)
   })
 
   it('allows not calling .push in a call', async () => {
-    let transform = bstream.transform(data => {
+    const stream = transform(data => {
       if (data !== 2) {
         return data
       }
     })
     let sum = 0
-    transform.on('data', data => {
+    stream.on('data', data => {
       sum += data
     })
-    await bstream.pipe(numbers(), transform)
+    await pipe(numbers(), stream)
     assert.equal(sum, 19)
   })
 
   it('handles sync errors', async () => {
-    const transform = bstream.transform(() => { throw new Error("I'm an Error") })
-    const transformPromise = transform.promise()
-    transform.write(4)
+    const stream = transform(() => { throw new Error("I'm an Error") })
+    const transformPromise = stream.promise()
+    stream.write(4)
     await transformPromise.then(() => {
       assert.isTrue(false, 'The promise should have rejected')
     }, err => {
@@ -147,9 +147,9 @@ describe('TransformStream', () => {
   })
 
   it('handles async errors', async () => {
-    const transform = bstream.transform(async () => { throw new Error("I'm an Error") })
-    const transformPromise = transform.promise()
-    transform.write(4)
+    const stream = transform(async () => { throw new Error("I'm an Error") })
+    const transformPromise = stream.promise()
+    stream.write(4)
     await transformPromise.then(() => {
       assert.isTrue(false, 'The promise should have rejected')
     }, err => {
@@ -158,11 +158,11 @@ describe('TransformStream', () => {
   })
 
   it('handles pushing rejected promises', async () => {
-    const transform = bstream.transform(function () {
+    const stream = transform(function () {
       this.push(Promise.reject(new Error("I'm an Error")))
     })
-    const transformPromise = transform.promise()
-    transform.write(4)
+    const transformPromise = stream.promise()
+    stream.write(4)
     await transformPromise.then(() => {
       assert.isTrue(false, 'The promise should have rejected')
     }, err => {
@@ -172,30 +172,30 @@ describe('TransformStream', () => {
 
   it('#promise()', async () => {
     let count = 0
-    const transform = bstream.transform(data => count++)
-    numbers().pipe(transform)
-    await transform.promise()
+    const stream = transform(data => count++)
+    numbers().pipe(stream)
+    await stream.promise()
     assert.equal(count, 6)
   })
 
   it('supports writable objects and readable buffers', async () => {
-    const transform = new bstream.TransformStream({
+    const stream = new TransformStream({
       readableObjectMode: false,
       writableObjectMode: true,
       transform ({ value }) {
         const data = value.toString()
         this.push(data)
-      }
+      },
     })
 
-    bstream.pipe(objects(), transform)
-    assert.deepEqual(await bstream.collect(transform), Buffer.from('123456'))
+    pipe(objects(), stream)
+    assert.deepEqual(await collect(stream), Buffer.from('123456'))
   })
 
   it('allows for concurrent operations', async () => {
     // resolve the promise from the deferred on the 2nd data event
     const defered = defer()
-    const transform = bstream.transform({ concurrent: 2 }, async data => {
+    const stream = transform({ concurrent: 2 }, async data => {
       if (data === 1) {
         return defered.promise
       }
@@ -207,49 +207,49 @@ describe('TransformStream', () => {
         return null
       }
     })
-    transform.write(1)
-    transform.write(2)
-    transform.write('end')
-    const data = await bstream.collect(transform)
-    assert.deepEqual(data.sort(), [1, 2])
+    stream.write(1)
+    stream.write(2)
+    stream.write('end')
+    const dataArray = await collect(stream)
+    assert.deepEqual((dataArray as any[]).sort(), [1, 2])
   })
 
   it('ensures all concurrent operations finish before finishing', async () => {
     let finished = 0
-    const transform = bstream.transform({ concurrent: 6 }, num => delay(num).then(() => finished++))
-    await bstream.pipe(numbers(), transform)
+    const stream = transform({ concurrent: 6 }, num => delay(num).then(() => finished++))
+    await pipe(numbers(), stream)
     assert.equal(finished, 6)
   })
 
   it('ensures all concurrent operations finish before ending with data', async () => {
     let finished = 0
-    const transform = bstream.transform({ concurrent: 6 }, num => delay(num).then(() => finished++))
-    transform.write(1)
-    transform.write(2)
-    transform.end(3)
-    await transform.promise()
+    const stream = transform({ concurrent: 6 }, num => delay(num).then(() => finished++))
+    stream.write(1)
+    stream.write(2)
+    stream.end(3)
+    await stream.promise()
     assert.equal(finished, 3)
   })
 
   it('ensures all concurrent operations finish before ending', async () => {
     let finished = 0
     const nums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null]
-    const source = bstream.read(async function () {
+    const source = read(async function () {
       await promiseImmediate()
       this.push(nums.shift())
       this.push(nums.shift())
     })
-    const sink = bstream.transform({ concurrent: 6 }, async num => {
+    const sink = transform({ concurrent: 6 }, async num => {
       await delay(num)
       finished++
     })
-    await bstream.pipe(source, sink)
+    await pipe(source, sink)
     assert.equal(finished, 11)
   })
 
   it('handles pushing more than the buffer in a single read', async () => {
-    await bstream.pipe(manyNumbers(), bstream.transform(function (nums) {
+    await pipe(manyNumbers(), transform(function (nums) {
       nums.forEach(num => this.push(num))
-    }), bstream.write(i => i))
+    }), write(i => i))
   })
 })

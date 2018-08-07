@@ -1,4 +1,4 @@
 --bail
 --require ts-node/register
 --require chai/register-assert
-test/*.ts
+lib/*-test.ts

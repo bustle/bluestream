@@ -5,7 +5,7 @@ async function reduceStreamFn (value, encoding) {
   if (this.acc === undefined) {
     this.acc = currentValue
   } else {
-    this.acc = await Promise.resolve(this.reduceFn(this.acc, currentValue, encoding))
+    this.acc = await this.reduceFn(this.acc, currentValue, encoding)
   }
   this.push(this.acc)
 }

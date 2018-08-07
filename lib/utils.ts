@@ -2,13 +2,17 @@ import { Readable, Stream } from 'stream'
 import { IBluestream } from './interfaces'
 
 export function defer () {
-  let resolveCb: (data) => void
-  let rejectCb: (error: Error) => void
+  let resolveCb
+  let rejectCb
   const promise: Promise<any> = new Promise((resolve, reject) => {
     resolveCb = resolve
     rejectCb = reject
   })
-  return { resolve: resolveCb, reject: rejectCb, promise }
+  return {
+    promise,
+    reject: rejectCb as ((error: Error) => void),
+    resolve: resolveCb as ((data?) => void),
+  }
 }
 
 export function maybeResume (stream: Stream) {

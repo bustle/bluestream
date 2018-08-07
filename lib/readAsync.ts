@@ -32,7 +32,7 @@ const internalReadAsync = async (stream: Readable, count?: number) => {
   stream.once('error', reject)
 
   if (objectMode) {
-    const objects = []
+    const objects: any[] = []
     for (let index = 0; index < (count || 1); index++) {
       const obj = await readOnceAsync(stream)
       if (obj === null) {
