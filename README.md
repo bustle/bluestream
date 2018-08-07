@@ -3,9 +3,7 @@
 [![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream) [![Try bluestream on RunKit](https://badge.runkitcdn.com/bluestream.svg)](https://npm.runkit.com/bluestream)
 
 
-A collection of NodeJS Streams and stream utilities that work well with promises and async functions. Think `through2-concurrent` with promise support. The goal is to reduce the edge cases when mixing streams and promises. These are a little slower than normal streams but much more forgiving.
-
-Originally forked from [promise-streams](https://github.com/spion/promise-streams) but with some different goals and a lot more tests. Named after bluebird but not actually using bluebird. (Though we work great with it, highly recommended!)
+A collection of NodeJS Streams and stream utilities that work well with promises and async functions. Think `through2-concurrent` with promise support. The goal is to reduce the edge cases when mixing streams and promises. In general Promises are slower than callbacks but these streams a lot more forgiving than node core.
 
 - `ReadStream` Easy async producing of data
 - `TransformStream` Easy async transforming of data
@@ -21,30 +19,32 @@ Originally forked from [promise-streams](https://github.com/spion/promise-stream
 # Examples
 
 ```js
-const bluestream = require('bluestream')
+const { read, transform, write, pipe } = require('bluestream')
 const got = require('got')
 
-const pokeStream = bluestream.read(async function () {
+const pokeStream = read(async function () {
   this.offset = this.offset || 0
   const { body: pokemon } = await got(`https://pokeapi.co/api/v2/pokemon/?offset=${this.offset}`, { json: true })
   if (pokemon.results.length > 0) {
     this.offset += pokemon.results.length
-    pokemon.results.map(monster => this.push(monster))
+    for (const monster of pokemon.results) {
+      this.push(monster)
+    }
   } else {
     return null
   }
 })
 
-const pokedexStream = bluestream.transform({ concurrent: 2 }, ({ url }) => got(url, { json: true }).then(resp => resp.body))
-const logStream = bluestream.write(pokemon => console.log(pokemon.name, pokemon.sprites.front_default))
+const pokedexStream = transform({ concurrent: 2 }, ({ url }) => got(url, { json: true }).then(resp => resp.body))
+const logStream = write(pokemon => console.log(`<h1>${pokemon.name}</h1><img src="${pokemon.sprites.front_default}">`))
 
-await bluestream.pipe(pokeStream, pokedexStream, logStream)
+await pipe(pokeStream, pokedexStream, logStream)
 console.log('caught them all')
 ```
 
 # api
 
-#### ps.read
+#### read
 
 `([opts:Options,] fn:(bytesWanted) => Promise)) => ReadStream`
 
@@ -95,10 +95,10 @@ const hscanStream = bstream.read(async () => {
 })
 ```
 
-#### ps.transform
-#### ps.map
+#### transform
+#### map
 
-`([opts:Options,] fn:(data[, enc]) => Promise)) => TransformStream`
+`transform([opts:Options,] fn:(data[, enc]) => Promise)): TransformStream`
 
 #### TransformStream
 
@@ -119,11 +119,13 @@ Options:
 
 The other options are also passed to node's Transform stream constructor.
 
-#### ps.write
+#### write
 
-`([opts:Options,] fn:(data[, enc]) => Promise)) => WriteStream`
+`write([opts:Options,] fn:(data[, enc]) => Promise)): WriteStream`
 
 #### WriteStream
+
+`new WriteStream(inputOpts: IWritableStreamOptions | writeFunction, fn?: writeFunction): WriteStream`
 
 Create a write-promise stream. Pass it a function that takes data and
 encoding returns a promise that indicates when the object/chunk are fully processed.
@@ -145,16 +147,16 @@ The other options are also passed to node's Write stream constructor.
 
 #### filter
 
-`([opts:Options,] fn: async (data[, enc]) => boolean) => FilterStream`
+`filter([opts:Options,] fn: async (data[, enc]) => boolean): FilterStream`
 
 Create a new FilterStream. The function should return a boolean to
 indicate whether the data value should pass to the next stream
 
-Options: Same as `ps.transform`
+Options: Same as `transform`
 
 #### reduce
 
-`([opts:Options,] fn: (acc, data[, enc]) => Promise) => ReduceStream`
+`reduce([opts:Options,] fn: (acc, data[, enc]) => Promise): ReduceStream`
 
 Reduces the objects in this promise stream. The function takes the resolved
 current accumulator and data object and should return the next accumulator
@@ -173,34 +175,40 @@ process.stdin.pipe(split()).pipe(es.reduce(function(acc, el) {
 
 #### wait
 
-`(s: Stream) => Promise`
+`wait(stream: ReadableStream): Promise`
 
 Wait for the stream to end. Also captures errors.
 
 #### pipe
 
-`(source: Stream, destination: Stream) => Promise`
+`pipe(readable: Readable, ...writableStreams: Writable[]): Promise<void>`
 
 Pipes s1 to s2 and forwards all errors to the resulting promise. The promise is
 fulfilled without a value when the destination stream ends.
 
 #### collect
 
-`(source: Stream) => Promise`
+`collect(stream: Readable): Promise<null | string | any[] | Buffer>`
 
 Returns a Buffer, string or array of all the data events concatenated together. If no events null is returned.
 
 #### readAsync
 
-`(source: Stream, count: Number) => Promise`
+`readAsync(stream: Readable, count?: number): Promise<any>`
 
 Returns a count of bytes in a Buffer, characters in a string or objects in an array. If no data arrives before the stream ends `null` is returned.
 
-#### PromiseStream.promise
+#### iterate
+
+`iterate(stream: Readable): Readable | AsyncIterableIterator<any>`
+
+Returns an async iterator for any stream on node 8+
+
+#### BlueStream.promise
 
 `() => Promise`
 
-Returns a promise fulfilled at the end of the stream, rejected if any errors
+All streams implement a promise method that returns a promise that's fulfilled at the end of the stream, rejected if any errors
 events are emitted by the stream.
 
 For `ReduceStreams`, the promise is for the final reduction result. Any

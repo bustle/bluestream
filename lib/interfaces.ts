@@ -1,5 +1,5 @@
-import { Readable, Stream } from 'stream'
+import { Stream } from 'stream'
 
 export interface IBluestream extends Stream {
-  promise (): Promise<void>
+  readonly promise: () => Promise<void>
 }

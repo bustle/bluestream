@@ -1,7 +1,7 @@
 {
   "name": "bluestream",
-  "version": "0.0.0-development",
-  "description": "A collection of streams that work well with promises (through, map, reduce). Through2 with promise support",
+  "version": "9.0.0",
+  "description": "A collection of streams that work well with promises (through, map, reduce). Think Through2 with promises",
   "main": "dist",
   "types": "dist/index.d.ts",
   "repository": "git@github.com:bustle/bluestream.git",
@@ -16,16 +16,20 @@
     "prepublish": "npm run build"
   },
   "keywords": [
-    "through",
-    "through2",
-    "through2-concurrent",
+    "async streams",
+    "async",
+    "async/await",
+    "await",
+    "concurrent streams",
     "promise",
-    "stream",
     "readable",
-    "transform",
-    "writable",
+    "stream",
+    "through",
+    "through2-concurrent",
+    "through2",
     "transform streams",
-    "bluebird"
+    "transform",
+    "writable"
   ],
   "author": "reconbot",
   "license": "MIT",
@@ -39,6 +43,7 @@
     "split2": "^2.2.0",
     "ts-node": "^7.0.0",
     "tslint": "^5.11.0",
+    "tslint-eslint-rules": "^5.3.1",
     "typescript": "^3.0.0"
   },
   "engines": {
