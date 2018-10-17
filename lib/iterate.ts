@@ -5,8 +5,8 @@ if (Symbol.asyncIterator === undefined) {
   (Symbol as any).asyncIterator = Symbol.for('asyncIterator')
 }
 
-async function* iterateObjectMode (stream) {
-  let data = true
+async function* iterateObjectMode (stream: Readable) {
+  let data: any = true
   while (data) {
     data = await readAsync(stream, 1)
     if (data) {
@@ -15,7 +15,7 @@ async function* iterateObjectMode (stream) {
   }
 }
 
-async function* iterateBufferMode (stream) {
+async function* iterateBufferMode (stream: Readable) {
   let data = true
   while (data) {
     data = await readAsync(stream)

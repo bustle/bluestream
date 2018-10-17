@@ -10,7 +10,7 @@ async function reduceStreamFn (value, encoding) {
   this.push(this.acc)
 }
 
-export type reduceFunction = (acc: any, currentValue: any, encoding: string) => Promise<any>
+export type reduceFunction = (acc: any, currentValue: any, encoding: string) => Promise<any> | any
 
 export class ReduceStream extends TransformStream {
   private reduceFn: reduceFunction

@@ -3,7 +3,7 @@ import { createReadStream } from 'fs'
 import { join } from 'path'
 import * as split from 'split2'
 import { Readable } from 'stream'
-import { collect, filter, map, pipe, wait, write } from '../lib'
+import { collect, filter, map, pipe, reduce, wait, write } from '../lib'
 
 function lines () {
   return rawString().pipe(split())
@@ -36,6 +36,10 @@ describe('#wait', () => {
     })))
     assert.equal(last, '9', 'should wait for the last element')
   })
+  it('resolved the value of the streams promise function if it has one', async () => {
+    const fakeStream = { promise: async () => 4 }
+    assert.equal(await wait(fakeStream as any), 4)
+  })
 })
 
 describe('#collect', () => {
@@ -62,6 +66,13 @@ describe('#pipe', () => {
 
     await pipe(extract, transform, load)
     assert.deepEqual(numbers, [2, 4, 6])
+  })
+  it('resolves the value of the last streams optional promise function', async () => {
+    const extract = objects()
+    const transform = filter(({ value }) => value % 2 === 0)
+    const sum = reduce((total, { value }) => total + value, 0)
+
+    assert.equal(await pipe(extract, transform, sum), 12)
   })
 })
 

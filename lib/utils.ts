@@ -1,7 +1,13 @@
 import { Readable, Stream } from 'stream'
 import { IBluestream } from './interfaces'
 
-export function defer () {
+export interface IDeferable {
+  promise: Promise<any>
+  reject: (error: Error) => void
+  resolve: (data?: any) => void
+}
+
+export function defer (): IDeferable {
   let resolveCb
   let rejectCb
   const promise: Promise<any> = new Promise((resolve, reject) => {
@@ -10,8 +16,8 @@ export function defer () {
   })
   return {
     promise,
-    reject: rejectCb as ((error: Error) => void),
-    resolve: resolveCb as ((data?) => void),
+    reject: (rejectCb as unknown) as ((error: Error) => void),
+    resolve: (resolveCb as unknown) as ((data?: any) => void),
   }
 }
 

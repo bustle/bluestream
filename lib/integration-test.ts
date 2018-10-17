@@ -1,5 +1,5 @@
 import { assert } from 'chai'
-import * as bluestream from '../lib'
+import { pipe, read, write } from '.'
 
 function delay (ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -10,7 +10,7 @@ describe('Integration scenarios', () => {
     let begin = 0
     const end = 100
 
-    const idStream = bluestream.read(async function () {
+    const idStream = read(async function () {
       if (begin < end) {
         begin++
         this.push(begin)
@@ -19,11 +19,11 @@ describe('Integration scenarios', () => {
       }
     })
     const ids: any[] = []
-    const articleStream = bluestream.write({ concurrent: 20 }, id => {
+    const articleStream = write({ concurrent: 20 }, id => {
       ids.push(id)
       return delay(100).then(() => id)
     })
-    await bluestream.pipe(idStream, articleStream)
+    await pipe(idStream, articleStream)
     assert.equal(ids.length, 100)
   })
 })

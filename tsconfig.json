@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "outDir": "dist",
     "allowJs": false,
-    "target": "es2017",
-    "moduleResolution": "node",
-    "module": "commonjs",
     "declaration": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noImplicitAny": false,
+    "outDir": "dist",
     "strictNullChecks": true,
+    "target": "es2017",
     "lib": [
       "es2017",
       "esnext.asynciterable"
