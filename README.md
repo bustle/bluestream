@@ -5,17 +5,6 @@
 
 A collection of NodeJS Streams and stream utilities that work well with promises and async functions. Think `through2-concurrent` with promise support. The goal is to reduce the edge cases when mixing streams and promises. In general Promises are slower than callbacks but these streams a lot more forgiving than node core.
 
-- `ReadStream` Easy async producing of data
-- `TransformStream` Easy async transforming of data
-- `WriteStream` Easy async writing of data
-- `FilterStream` similar to `Array.prototype.filter` Easy stream filtering of data
-- `ReduceStream` similar to `Array.prototype.reduce` but a stream that emits each step and `.promise()` resolves to the end result
-
-- `bluestream.wait(stream)` resolves when the stream finishes
-- `bluestream.collect(stream)` Concats strings and buffers, returns an array of objects.
-- `bluestream.readAsync(stream, numberOfBytesOrObjects)` Reads a number of bytes or objects from a stream
-- `bluestream.pipe(source, target, [target,])` Returns a promise for when the last target stream finishes
-
 # Examples
 
 ```js
@@ -44,11 +33,12 @@ console.log('caught them all')
 
 # api
 
-#### read
+## read
 
 `([opts:Options,] fn:(bytesWanted) => Promise)) => ReadStream`
 
-#### ReadStream
+
+## ReadStream
 
 Create a read-promise stream. Pass it a function that takes the number of bytes or objects of wanted data and and uses `this.push` or `return` to push values or promises. This function should return a promise that indicates when the object/chunk are fully processed. Return or push `null` to end the stream.
 
@@ -95,12 +85,12 @@ const hscanStream = bstream.read(async () => {
 })
 ```
 
-#### transform
-#### map
+## transform
+## map
 
 `transform([opts:Options,] fn:(data[, enc]) => Promise)): TransformStream`
 
-#### TransformStream
+## TransformStream
 
 Create a transform-promise stream. Pass it a function that takes data and
 encoding and uses `this.push` to push values or promises. Any returned, non undefined, value will automatically be pushed. This function should
@@ -119,11 +109,11 @@ Options:
 
 The other options are also passed to node's Transform stream constructor.
 
-#### write
+## write
 
 `write([opts:Options,] fn:(data[, enc]) => Promise)): WriteStream`
 
-#### WriteStream
+## WriteStream
 
 `new WriteStream(inputOpts: IWritableStreamOptions | writeFunction, fn?: writeFunction): WriteStream`
 
@@ -145,7 +135,7 @@ Options:
 
 The other options are also passed to node's Write stream constructor.
 
-#### filter
+## filter
 
 `filter([opts:Options,] fn: async (data[, enc]) => boolean): FilterStream`
 
@@ -154,7 +144,7 @@ indicate whether the data value should pass to the next stream
 
 Options: Same as `transform`
 
-#### reduce
+## reduce
 
 `reduce([opts:Options,] fn: (acc, data[, enc]) => Promise): ReduceStream`
 
@@ -173,38 +163,73 @@ process.stdin.pipe(split()).pipe(es.reduce(function(acc, el) {
 });
 ```
 
-#### wait
+## wait
 
-`wait(stream: ReadableStream): Promise`
+`wait(stream: Stream): Promise<any>`
 
-Wait for the stream to end. Also captures errors.
+Wait for the stream to end. Rejects on errors. If the stream has a `.promise()` method resolve that value, like from [reduce](#reduce).
 
-#### pipe
+## pipe
 
-`pipe(readable: Readable, ...writableStreams: Writable[]): Promise<void>`
+`pipe(readable: Readable, ...writableStreams: Writable[]): Promise<any>;`
 
-Pipes s1 to s2 and forwards all errors to the resulting promise. The promise is
-fulfilled without a value when the destination stream ends.
+Pipes readable to writableStreams and forwards all errors to the resulting promise. The promise when the destination stream ends. If the last writableStream has a `.promise()` method that is resolved. If the last stream is a reduce stream the final value is resolved.
 
-#### collect
+Pipe example
+```ts
+import { pipe, read, write } from 'bluestream'
+const values = [1, 2, 3, null]
+await pipe(
+  read(() => values.shift()),
+  write(number => console.log(number))
+)
+
+```
+
+Reduce example
+```ts
+import { pipe, read, reduce } from 'bluestream'
+const values = [1, 2, 3, null]
+const sum = await pipe(
+  read(() => values.shift()),
+  reduce((total, value) => total + value, 0)
+)
+console.log(sum)
+// 6
+```
+
+## collect
 
 `collect(stream: Readable): Promise<null | string | any[] | Buffer>`
 
 Returns a Buffer, string or array of all the data events concatenated together. If no events null is returned.
 
-#### readAsync
+```ts
+import { collect, read } from 'bluestream'
+await collect(fs.readStream('file'))
+// <Buffer 59 6f 75 20 61 72 65 20 63 6f 6f 6c 21>
+await collect(fs.readStream('file', 'utf8'))
+// 'You are cool!'
+const values = [1, 2, 3, null]
+await collect(read(() => values.shift()))
+// [1, 2, 3]
+await collect(read(() => null))
+// null
+```
+
+## readAsync
 
 `readAsync(stream: Readable, count?: number): Promise<any>`
 
 Returns a count of bytes in a Buffer, characters in a string or objects in an array. If no data arrives before the stream ends `null` is returned.
 
-#### iterate
+## iterate
 
 `iterate(stream: Readable): Readable | AsyncIterableIterator<any>`
 
 Returns an async iterator for any stream on node 8+
 
-#### BlueStream.promise
+## BlueStream.promise
 
 `() => Promise`
 
@@ -214,7 +239,3 @@ events are emitted by the stream.
 For `ReduceStreams`, the promise is for the final reduction result. Any
 stream errors or exceptions encountered while reducing will result with a
 rejection of the promise.
-
-# Releasing
-
-We use [semantic release](https://github.com/semantic-release/semantic-release) and the angular commit message format. If you commit a breaking change to master a release will be published.
