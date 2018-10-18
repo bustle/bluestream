@@ -20,7 +20,7 @@ const readOnceAsync = async (stream: Readable, count?: number) => {
   })
 }
 
-const internalReadAsync = async (stream: Readable, count?: number) => {
+const internalReadAsync = async (stream: Readable, count?: number): Promise<any[] | null> => {
   const { resolve, reject, promise } = defer()
   const readableState = (stream as any)._readableState
   const objectMode = readableState && readableState.objectMode

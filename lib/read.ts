@@ -1,14 +1,13 @@
 import { Readable, ReadableOptions } from 'stream'
 import { IBluestream } from './interfaces'
 import { internalIterator } from './iterate'
-import { readAsync } from './readAsync'
-import { defer, maybeResume } from './utils'
+import { defer, IDeferable, maybeResume } from './utils'
 
 if (Symbol.asyncIterator === undefined) {
   (Symbol as any).asyncIterator = Symbol.for('asyncIterator')
 }
 
-async function readHandler (bytes) {
+async function readHandler (this: ReadStream, bytes?: number) {
   if (this.asyncReading) {
     return
   }
@@ -24,7 +23,7 @@ async function readHandler (bytes) {
     await Promise.all(this.asyncQueue)
     this.asyncReading = false
     if (this.keepReading) {
-      this._read()
+      this._read(Infinity)
     }
   } catch (err) {
     this.emitError(err)
@@ -40,13 +39,13 @@ export interface IReadableStreamOptions extends ReadableOptions {
 }
 
 export class ReadStream extends Readable implements IBluestream {
+  public asyncQueue: Set<Promise<any>>
+  public asyncReading: boolean
+  public keepReading: boolean
+  public asyncRead: (bytes?: number) => Promise<any>
   private handlingErrors: boolean
-  private asyncReading: boolean
-  private keepReading: boolean
   private isEnding: boolean
-  private streamEnd
-  private asyncQueue: Set<Promise<any>>
-  private asyncRead: (bytes: number) => Promise<any>
+  private streamEnd: IDeferable
 
   constructor (opts: IReadableStreamOptions | readFunction = {}, fn?: readFunction) {
     if (typeof opts === 'function') {
@@ -79,7 +78,7 @@ export class ReadStream extends Readable implements IBluestream {
     this.once('end', () => this.streamEnd.resolve())
   }
 
-  public push (data) {
+  public push (data: any) {
     if (data === null) {
       this._endingPush()
       return false
@@ -105,8 +104,8 @@ export class ReadStream extends Readable implements IBluestream {
     }, err => this.emit(err))
   }
 
-  public emitError (e) {
-    this.emit('error', e)
+  public emitError (error: Error) {
+    this.emit('error', error)
   }
 
   public promise () {

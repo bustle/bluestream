@@ -2,8 +2,7 @@ import { assert } from 'chai'
 import { createReadStream } from 'fs'
 import { join } from 'path'
 import { Readable } from 'stream'
-import { read, ReadStream, wait } from '../lib'
-import { iterate } from '../lib/'
+import { iterate, read } from '.'
 
 if (Symbol.asyncIterator === undefined) {
   (Symbol as any).asyncIterator = Symbol.for('asyncIterator')

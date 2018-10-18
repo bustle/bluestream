@@ -1,15 +1,15 @@
 import { Readable, Writable } from 'stream'
-import { defer } from './utils'
+import { defer, wait } from './utils'
 
 export async function pipe (readable: Readable, ...writableStreams: Writable[]) {
   const streams = [readable, ...writableStreams]
   if (streams.length < 2) {
     throw new TypeError('Must pipe to two or more streams')
   }
-  const pipeDone = defer()
+  const { promise, reject } = defer()
 
   streams.forEach((stream, index) => {
-    stream.on('error', pipeDone.reject)
+    stream.on('error', reject)
 
     const lastStream = index + 1 === streams.length
     if (!lastStream) {
@@ -19,16 +19,12 @@ export async function pipe (readable: Readable, ...writableStreams: Writable[]) 
   })
 
   const sink = streams[streams.length - 1]
-  sink.on('finish', pipeDone.resolve)
-  sink.on('end', pipeDone.resolve)
 
   try {
-    await pipeDone.promise
+    return await Promise.race([wait(sink), promise])
   } finally {
     streams.forEach(stream => {
-      stream.removeListener('error', pipeDone.reject)
+      stream.removeListener('error', reject)
     })
-    sink.removeListener('finish', pipeDone.resolve)
-    sink.removeListener('end', pipeDone.resolve)
   }
 }

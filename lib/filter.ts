@@ -17,7 +17,7 @@ export class FilterStream extends TransformStream {
     }
   }
 
-  public async _transform (data, encoding) {
+  public async _transform (data: any, encoding?: any) {
     const keep = await this.filterFunction(data, encoding)
     if (keep) {
       await this.push(data)
