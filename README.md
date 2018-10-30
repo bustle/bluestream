@@ -1,22 +1,25 @@
-# bluestream
+# bluestream 🏄‍♀️
 
 [![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream) [![Try bluestream on RunKit](https://badge.runkitcdn.com/bluestream.svg)](https://npm.runkit.com/bluestream)
 
 
 A collection of NodeJS Streams and stream utilities that work well with promises and async functions. Think `through2-concurrent` with promise support. The goal is to reduce the edge cases when mixing streams and promises. In general Promises are slower than callbacks but these streams a lot more forgiving than node core.
 
+Written in typescript, designed in NYC.
+
 # Examples
 
 ```js
-const { read, transform, write, pipe } = require('bluestream')
-const got = require('got')
+import { read, transform, write, pipe } from 'bluestream'
+import got from 'got'
 
+// paginate an API
 const pokeStream = read(async function () {
   this.offset = this.offset || 0
-  const { body: pokemon } = await got(`https://pokeapi.co/api/v2/pokemon/?offset=${this.offset}`, { json: true })
-  if (pokemon.results.length > 0) {
-    this.offset += pokemon.results.length
-    for (const monster of pokemon.results) {
+  const { body: { results } } = await got(`https://pokeapi.co/api/v2/pokemon/?offset=${this.offset}`, { json: true })
+  if (results.length > 0) {
+    this.offset += results.length
+    for (const monster of results) {
       this.push(monster)
     }
   } else {
@@ -24,10 +27,20 @@ const pokeStream = read(async function () {
   }
 })
 
-const pokedexStream = transform({ concurrent: 2 }, ({ url }) => got(url, { json: true }).then(resp => resp.body))
-const logStream = write(pokemon => console.log(`<h1>${pokemon.name}</h1><img src="${pokemon.sprites.front_default}">`))
+const fetchMonsterInfo = transform({ concurrent: 2 }, async ({ url }) => {
+  const { body } = await got(url, { json: true })
+  return body
+})
 
-await pipe(pokeStream, pokedexStream, logStream)
+const logStream = write(pokemon => {
+  console.log(`<h1>${pokemon.name}</h1><img src="${pokemon.sprites.front_default}">`)
+})
+
+await pipe(
+  pokeStream,
+  fetchMonsterInfo,
+  logStream
+)
 console.log('caught them all')
 ```
 
@@ -161,6 +174,30 @@ process.stdin.pipe(split()).pipe(es.reduce(function(acc, el) {
 })).promise().then(function(sum) {
 
 });
+```
+
+## tap
+
+```ts
+tap(opts?: ITransformStreamOptions | ITapFunction, fn?: ITapFunction) => TapStream
+new TapStream(opts?: ITransformStreamOptions | ITapFunction, tapFunction?: ITapFunction)
+```
+
+A pass through stream that lets you intercepts data and process it. Support async tap functions which will delay processing. Supports `concurrent` if you need it.
+
+```ts
+import { pipe, tap, write } from 'bluestream'
+import { ghoulGenerator, saveGhoul } from './util'
+
+await pipe(
+  ghoulGenerator(),
+  tap(console.log),
+  write(ghoul => saveGhoul(ghoul))
+)
+// Ghoul(1)
+// Ghoul(2)
+// Ghoul(3)
+// ... endless Ghouls
 ```
 
 ## wait

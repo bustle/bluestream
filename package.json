@@ -13,7 +13,7 @@
     "lint": "tsc && tslint lib/*.ts",
     "format": "tslint lib/*.ts --fix",
     "build": "tsc",
-    "prepublish": "npm run build"
+    "prepare": "npm run build"
   },
   "keywords": [
     "async streams",

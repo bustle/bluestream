@@ -33,24 +33,24 @@ function flushHandler (done) {
     .then(data => done(null, data), done)
 }
 
-export type transformFunction = (data: string | Buffer | any, encoding: string) => Promise<any>|any
+export type ITransformFunction = (data: string | Buffer | any, encoding: string) => Promise<any>|any
 
 export interface ITransformStreamOptions extends DuplexOptions {
   concurrent?: number
-  transform?: transformFunction
+  transform?: ITransformFunction
   flush?: () => Promise<any>|any
 }
 
 export class TransformStream extends Transform implements IBluestream {
   public concurrent: number
   private asyncFlush: () => Promise<any>
-  private asyncTransform: transformFunction
+  private asyncTransform: ITransformFunction
   private handlingErrors: boolean
   private queue: Set<Promise<any>>
   private streamEnd
   private doneThisTick: boolean
 
-  constructor (inputOpts: ITransformStreamOptions | transformFunction, fn?: transformFunction) {
+  constructor (inputOpts: ITransformStreamOptions | ITransformFunction, fn?: ITransformFunction) {
     if (typeof inputOpts === 'function') {
       fn = inputOpts
       inputOpts = {}
@@ -140,5 +140,5 @@ export class TransformStream extends Transform implements IBluestream {
 }
 
 export const transform =
-  (opts: ITransformStreamOptions | transformFunction, fn?: transformFunction) => new TransformStream(opts, fn)
+  (opts: ITransformStreamOptions | ITransformFunction, fn?: ITransformFunction) => new TransformStream(opts, fn)
 export const map = transform

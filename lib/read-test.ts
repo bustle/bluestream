@@ -1,7 +1,7 @@
 import { assert } from 'chai'
 import { createReadStream } from 'fs'
 import { join } from 'path'
-import { read, ReadStream, wait } from '../lib'
+import { read, ReadStream, wait } from './'
 
 function stringStream () {
   return createReadStream(join(__dirname, 'small-text.txt'), 'utf8')
@@ -193,7 +193,7 @@ describe('ReadStream', () => {
     const arr = [1, 2, 3, null]
     const stream = read(() => arr.shift())
     const asyncArray: any[] = []
-    for await (const val of stream) {
+    for await (const val of (stream as any)) {
       asyncArray.push(val)
     }
     assert.deepEqual(asyncArray, [1, 2, 3])
@@ -203,7 +203,7 @@ describe('ReadStream', () => {
     const arr = [1, 2, 3, null]
     const stream = bufferStream()
     const valuesArray: any[] = []
-    for await (const val of stream) {
+    for await (const val of (stream as any)) {
       valuesArray.push(val)
     }
     assert.deepEqual(Buffer.concat(valuesArray), Buffer.from('1234'))

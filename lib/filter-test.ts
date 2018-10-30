@@ -1,6 +1,6 @@
 import { assert } from 'chai'
 import { Readable } from 'stream'
-import { collect, filter } from '../lib'
+import { collect, filter } from './'
 
 function numbers () {
   const arr = [1, 2, 3, 4, 5, 6, null]
