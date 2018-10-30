@@ -17,21 +17,21 @@ async function writeHandler (data, encoding, done) {
   Promise.race(this.queue).then(() => done(), e => this.emitError(e))
 }
 
-export type writeFunction = (data: any, encoding: string) => Promise<void> | void | any
+export type IWriteFunction = (data: any, encoding: string) => Promise<void> | void | any
 
 export interface IWritableStreamOptions extends WritableOptions {
   concurrent?: number
-  write?: writeFunction
+  write?: IWriteFunction
 }
 
 export class WriteStream extends Writable implements IBluestream {
   public concurrent: number
-  private asyncWrite: writeFunction
+  private asyncWrite: IWriteFunction
   private handlingErrors: boolean
   private queue: Set<Promise<any>>
   private streamEnd
 
-  constructor (inputOpts: IWritableStreamOptions | writeFunction, fn?: writeFunction) {
+  constructor (inputOpts: IWritableStreamOptions | IWriteFunction, fn?: IWriteFunction) {
     if (typeof inputOpts === 'function') {
       fn = inputOpts
       inputOpts = {}
@@ -109,4 +109,4 @@ export class WriteStream extends Writable implements IBluestream {
   }
 }
 
-export const write = (opts: IWritableStreamOptions | writeFunction, fn?: writeFunction) => new WriteStream(opts, fn)
+export const write = (opts: IWritableStreamOptions | IWriteFunction, fn?: IWriteFunction) => new WriteStream(opts, fn)

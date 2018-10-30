@@ -4,6 +4,7 @@
   "rules": {
     "adjacent-overload-signatures": false,
     "arrow-parens": [true, "ban-single-arg-parens"],
+    "interface-name": [true, "always-prefix"],
     "curly": [true, "all"],
     "no-console": true,
     "no-empty-interface": false,

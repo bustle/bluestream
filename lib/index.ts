@@ -1,42 +1,47 @@
 import { collect } from './collect'
-import { filter, FilterStream } from './filter'
+import { filter, FilterStream, IFilterFunction } from './filter'
 import { iterate } from './iterate'
 import { pipe } from './pipe'
-import { IReadableStreamOptions, read, readFunction, ReadStream } from './read'
+import { IReadableStreamOptions, IReadFunction, read, ReadStream } from './read'
 import { readAsync } from './readAsync'
-import { reduce, reduceFunction, ReduceStream } from './reduce'
-import { ITransformStreamOptions, map, transform, transformFunction, TransformStream } from './transform'
+import { IReduceFunction, reduce, ReduceStream } from './reduce'
+import { ITapFunction, tap, TapStream } from './tap'
+import { ITransformFunction, ITransformStreamOptions, map, transform, TransformStream } from './transform'
 import { wait } from './utils'
-import { IWritableStreamOptions, write, writeFunction, WriteStream } from './write'
+import { IWritableStreamOptions, IWriteFunction, write, WriteStream } from './write'
 
 // types
 export { IBluestream } from './interfaces'
 export {
+  IFilterFunction,
   IReadableStreamOptions,
-  IWritableStreamOptions,
+  IReadFunction,
+  IReduceFunction,
+  ITapFunction,
+  ITransformFunction,
   ITransformStreamOptions,
-  transformFunction,
-  readFunction,
-  reduceFunction,
-  writeFunction,
+  IWritableStreamOptions,
+  IWriteFunction,
 }
 
 // methods
 export {
-  FilterStream,
-  ReadStream,
-  ReduceStream,
-  TransformStream,
-  WriteStream,
   collect,
   filter,
+  FilterStream,
   iterate,
   map,
   pipe,
   read,
   readAsync,
+  ReadStream,
   reduce,
+  ReduceStream,
+  tap,
+  TapStream,
   transform,
+  TransformStream,
   wait,
   write,
+  WriteStream,
 }

@@ -32,10 +32,10 @@ async function readHandler (this: ReadStream, bytes?: number) {
   }
 }
 
-export type readFunction = () => Promise<any>|any
+export type IReadFunction = () => Promise<any>|any
 
 export interface IReadableStreamOptions extends ReadableOptions {
-  read?: readFunction
+  read?: IReadFunction
 }
 
 export class ReadStream extends Readable implements IBluestream {
@@ -47,7 +47,7 @@ export class ReadStream extends Readable implements IBluestream {
   private isEnding: boolean
   private streamEnd: IDeferable
 
-  constructor (opts: IReadableStreamOptions | readFunction = {}, fn?: readFunction) {
+  constructor (opts: IReadableStreamOptions | IReadFunction = {}, fn?: IReadFunction) {
     if (typeof opts === 'function') {
       fn = opts
       opts = {}
@@ -123,4 +123,4 @@ ReadStream.prototype[Symbol.asyncIterator] = function () {
 }
 
 export const read =
-  (opts: IReadableStreamOptions | readFunction = {}, readFn?: readFunction) => new ReadStream(opts, readFn)
+  (opts: IReadableStreamOptions | IReadFunction = {}, readFn?: IReadFunction) => new ReadStream(opts, readFn)

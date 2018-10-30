@@ -1,11 +1,11 @@
 import { ITransformStreamOptions, TransformStream } from './transform'
 
-export type filterFunc = (data: any, encoding?: string) => boolean | Promise<boolean>
+export type IFilterFunction = (data: any, encoding?: string) => boolean | Promise<boolean>
 
 export class FilterStream extends TransformStream {
-  private filterFunction: filterFunc
+  private filterFunction: IFilterFunction
 
-  constructor (opts: ITransformStreamOptions | filterFunc, filterFunction?: filterFunc) {
+  constructor (opts: ITransformStreamOptions | IFilterFunction, filterFunction?: IFilterFunction) {
     if (typeof opts === 'function') {
       super({})
       this.filterFunction = opts
@@ -25,4 +25,5 @@ export class FilterStream extends TransformStream {
   }
 }
 
-export const filter = (opts: ITransformStreamOptions | filterFunc, fn?: filterFunc) => new FilterStream(opts, fn)
+// tslint:disable-next-line:max-line-length
+export const filter = (opts: ITransformStreamOptions | IFilterFunction, fn?: IFilterFunction) => new FilterStream(opts, fn)

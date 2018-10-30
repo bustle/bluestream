@@ -14,8 +14,18 @@ const pokeStream = read(async function () {
   }
 })
 
-const pokedexStream = transform({ concurrent: 2 }, ({ url }) => got(url, { json: true }).then(resp => resp.body))
-const logStream = write(pokemon => console.log(`<h1>${pokemon.name}</h1><img src="${pokemon.sprites.front_default}">`))
+const fetchMonsterInfo = transform({ concurrent: 2 }, async ({ url }) => {
+  const { body } = await got(url, { json: true })
+  return body
+})
 
-await pipe(pokeStream, pokedexStream, logStream)
+const logStream = write(pokemon => {
+  console.log(`<h1>${pokemon.name}</h1><img src="${pokemon.sprites.front_default}">`)
+})
+
+await pipe(
+  pokeStream,
+  fetchMonsterInfo,
+  logStream
+)
 console.log('caught them all')
