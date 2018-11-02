@@ -1,6 +1,6 @@
 import { ITransformStreamOptions, TransformStream } from './transform'
 
-async function reduceStreamFn (value, encoding) {
+async function reduceStreamFn (this: ReduceStream, value, encoding) {
   const currentValue = await Promise.resolve(value)
   if (this.acc === undefined) {
     this.acc = currentValue
@@ -13,8 +13,8 @@ async function reduceStreamFn (value, encoding) {
 export type IReduceFunction = (acc: any, currentValue: any, encoding: string) => Promise<any> | any
 
 export class ReduceStream extends TransformStream {
-  private reduceFn: IReduceFunction
-  private acc: any
+  protected acc: any
+  protected reduceFn: IReduceFunction
 
   constructor (opts: ITransformStreamOptions | IReduceFunction, reduceFn: IReduceFunction | any, initial?: any) {
     if (typeof opts === 'function') {

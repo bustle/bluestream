@@ -1,3 +1,4 @@
+import { batch, BatchStream } from './batch'
 import { collect } from './collect'
 import { filter, FilterStream, IFilterFunction } from './filter'
 import { iterate } from './iterate'
@@ -26,6 +27,8 @@ export {
 
 // methods
 export {
+  batch,
+  BatchStream,
   collect,
   filter,
   FilterStream,

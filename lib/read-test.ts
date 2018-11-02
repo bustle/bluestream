@@ -1,11 +1,5 @@
 import { assert } from 'chai'
-import { createReadStream } from 'fs'
-import { join } from 'path'
 import { read, ReadStream, wait } from './'
-
-function stringStream () {
-  return createReadStream(join(__dirname, 'small-text.txt'), 'utf8')
-}
 
 function bufferStream () {
   const values = [Buffer.from('12'), Buffer.from('3'), Buffer.from('4'), null]
@@ -200,7 +194,6 @@ describe('ReadStream', () => {
   })
 
   it('supports async iterators with buffers', async () => {
-    const arr = [1, 2, 3, null]
     const stream = bufferStream()
     const valuesArray: any[] = []
     for await (const val of (stream as any)) {

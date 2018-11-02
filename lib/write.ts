@@ -2,7 +2,7 @@ import { Writable, WritableOptions } from 'stream'
 import { IBluestream } from './interfaces'
 import { defer, maybeResume } from './utils'
 
-async function writeHandler (data, encoding, done) {
+async function writeHandler (this: WriteStream, data, encoding, done) {
   const processed = this.asyncWrite(data, encoding)
     .then(() => {
       this.queue.delete(processed)
@@ -26,9 +26,9 @@ export interface IWritableStreamOptions extends WritableOptions {
 
 export class WriteStream extends Writable implements IBluestream {
   public concurrent: number
-  private asyncWrite: IWriteFunction
+  protected asyncWrite: IWriteFunction
+  protected queue: Set<Promise<any>>
   private handlingErrors: boolean
-  private queue: Set<Promise<any>>
   private streamEnd
 
   constructor (inputOpts: IWritableStreamOptions | IWriteFunction, fn?: IWriteFunction) {

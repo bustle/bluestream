@@ -9,6 +9,7 @@
     "no-console": true,
     "no-empty-interface": false,
     "no-empty": false,
+    "no-use-before-declare":true,
     "no-return-await": true,
     "quotemark": [true, "single", "avoid-escape", "avoid-template"],
     "semicolon": [true, "never"],
