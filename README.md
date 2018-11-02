@@ -197,7 +197,31 @@ await pipe(
 // Ghoul(1)
 // Ghoul(2)
 // Ghoul(3)
-// ... endless Ghouls
+// ... 👻
+```
+
+## batch
+```ts
+batch(batchSize: number) => BatchStream
+new BatchStream(batchSize: number)
+```
+
+A stream that collects a given number of objects and emits them in an array.
+
+```ts
+import { batch, pipe, write } from 'bluestream'
+import { turkeyGenerator } from './util'
+
+await pipe(
+  turkeyGenerator(),
+  batch(2),
+  write(console.log)
+)
+// [turkey, turkey]
+// [turkey, turkey]
+// [turkey, turkey]
+// [turkey, turkey]
+// ... 🐧🐧
 ```
 
 ## wait

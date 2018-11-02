@@ -2,7 +2,7 @@ import { DuplexOptions, Transform } from 'stream'
 import { IBluestream } from './interfaces'
 import { defer, maybeResume } from './utils'
 
-async function transformHandler (data, encoding, done) {
+async function transformHandler (this: TransformStream, data, encoding, done) {
   // This works around a bug where you cannot call done twice in a single event loop
   // https://github.com/spion/promise-streams/blob/master/index.js#L70-L73
   // We've been able to observe this bug in production but not reproduce it in tests
@@ -25,10 +25,10 @@ async function transformHandler (data, encoding, done) {
   Promise.race(this.queue).then(finish, e => this.emitError(e))
 }
 
-function flushHandler (done) {
+function flushHandler (this: TransformStream, done) {
   Promise.all(this.queue)
     .then(() => {
-      return this.asyncFlush()
+      return this.asyncFlush && this.asyncFlush()
     })
     .then(data => done(null, data), done)
 }
@@ -43,12 +43,11 @@ export interface ITransformStreamOptions extends DuplexOptions {
 
 export class TransformStream extends Transform implements IBluestream {
   public concurrent: number
-  private asyncFlush: () => Promise<any>
-  private asyncTransform: ITransformFunction
+  protected asyncTransform: ITransformFunction
+  protected asyncFlush?: () => Promise<any>
+  protected queue: Set<Promise<any>>
   private handlingErrors: boolean
-  private queue: Set<Promise<any>>
   private streamEnd
-  private doneThisTick: boolean
 
   constructor (inputOpts: ITransformStreamOptions | ITransformFunction, fn?: ITransformFunction) {
     if (typeof inputOpts === 'function') {
@@ -87,7 +86,6 @@ export class TransformStream extends Transform implements IBluestream {
     this.handlingErrors = false
     this.concurrent = opts.concurrent
     this.queue = new Set()
-    this.doneThisTick = false
     this.once('finish', () => this.streamEnd.resolve())
   }
 

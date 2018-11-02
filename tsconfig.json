@@ -5,7 +5,10 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitAny": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "outDir": "dist",
+    "strict": false,
     "strictNullChecks": true,
     "target": "es2017",
     "lib": [

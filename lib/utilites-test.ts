@@ -78,9 +78,9 @@ describe('#pipe', () => {
 
 describe('error', () => {
   it('error', async () => {
-    await lines().pipe(map(async el => {
+    await lines().pipe(map(async () => {
       throw new Error('Oops')
-    })).promise().then(val => {
+    })).promise().then(() => {
       assert.ok(false, 'should not execute')
     }, e => {
       assert.ok(e, 'should be rejected')

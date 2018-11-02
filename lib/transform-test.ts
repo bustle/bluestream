@@ -172,7 +172,7 @@ describe('TransformStream', () => {
 
   it('#promise()', async () => {
     let count = 0
-    const stream = transform(data => count++)
+    const stream = transform(() => count++)
     numbers().pipe(stream)
     await stream.promise()
     assert.equal(count, 6)

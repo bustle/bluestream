@@ -10,8 +10,8 @@
   "scripts": {
     "test": "npm run unit-test && npm run lint",
     "unit-test": "mocha --opts lib/mocha.opts",
-    "lint": "tsc && tslint lib/*.ts",
-    "format": "tslint lib/*.ts --fix",
+    "lint": "tsc && tslint -p tsconfig-test.json lib/*.ts",
+    "format": "tslint -p tsconfig-test.json lib/*.ts --fix",
     "build": "tsc",
     "prepare": "npm run build"
   },

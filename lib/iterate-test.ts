@@ -21,10 +21,6 @@ function nativeObjectStream () {
     }})
 }
 
-function nativeStringStream () {
-  return createReadStream(join(__dirname, 'small-text.txt'), 'utf8')
-}
-
 function bufferStream () {
   const values = [Buffer.from('12'), Buffer.from('3'), Buffer.from('4'), null]
   return read({ objectMode: false }, () => values.shift())
@@ -80,7 +76,6 @@ describe('iterate', () => {
     assert.deepEqual(asyncArray, [1, 2, 3])
   })
   it('supports async iterators with buffers', async () => {
-    const arr = [1, 2, 3, null]
     const stream = bufferStream()
     const valuesArray: any[] = []
     for await (const val of stream) {

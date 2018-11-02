@@ -4,7 +4,7 @@ import { pipe, read, write, WriteStream } from '../lib'
 import { defer } from '../lib/utils'
 
 function numbers (num = 6) {
-  const arr: Array<number|null> = [...new Array(num)].map((val, i) => i + 1)
+  const arr: Array<number|null> = [...new Array(num)].map((_, i) => i + 1)
   arr.push(null)
   return new Readable({
     objectMode: true,
@@ -59,7 +59,7 @@ describe('WriteStream', () => {
 
   it('#promise()', async () => {
     let count = 0
-    const writer = write(data => count++)
+    const writer = write(() => count++)
     numbers().pipe(writer)
     await writer.promise()
     assert.equal(count, 6)
