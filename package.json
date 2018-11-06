@@ -1,6 +1,6 @@
 {
   "name": "bluestream",
-  "version": "10.3.1",
+  "version": "10.3.2",
   "description": "A collection of streams that work well with promises (through, map, reduce). Think Through2 with promises",
   "main": "dist",
   "types": "dist/index.d.ts",
