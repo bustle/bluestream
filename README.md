@@ -101,6 +101,7 @@ const hscanStream = bstream.read(async () => {
 ## transform (alias map)
 
 `transform([opts:Options,] fn:(data[, enc]) => Promise)): TransformStream`
+
 `map([opts:Options,] fn:(data[, enc]) => Promise)): TransformStream`
 
 ## TransformStream
