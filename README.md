@@ -129,8 +129,7 @@ The other options are also passed to node's Transform stream constructor.
 
 `new WriteStream(inputOpts: IWritableStreamOptions | writeFunction, fn?: writeFunction): WriteStream`
 
-Creates a write-promise stream which accepts a function that takes data and
-encoding as arguments and returns a promise that indicates when the object/chunk is fully processed.
+Creates a write-promise stream which accepts a function that takes data and encoding as arguments and returns a promise that indicates when the object/chunk is fully processed.
 
 Options:
   * `write` - An optional way to pass the write function
