@@ -290,13 +290,28 @@ Returns a count of bytes in a Buffer, characters in a string or objects in an ar
 
 Returns an async iterator for any stream on node 8+
 
-## BlueStream.promise
+## promise
 
-`() => Promise`
+`promise(stream: Readable) => Promise(any)`
 
-All streams implement a promise method that returns a promise that's fulfilled at the end of the stream, rejected if any errors
-events are emitted by the stream.
+All bluestream streams implement a promise method that returns a promise that's fulfilled at the end of the stream, rejected if any errors are emitted by the stream.
 
-For `ReduceStreams`, the promise is for the final reduction result. Any
-stream errors or exceptions encountered while reducing will result with a
-rejection of the promise.
+For `ReduceStreams`, the promise is for the final reduction result. Any stream errors or exceptions encountered while reducing will result with a rejection of the promise.
+
+```ts
+const { pipe, map, tap, reduce } = require('bluestream')
+const { Nodes } = require('./util')
+
+let count = 0
+const stats = await pipe(
+  Nodes.scan({ fields: true }),
+  map(generateStats),
+  tap(() => count++),
+  reduce(mergeGraphStats, {})
+)
+console.log({ count, stats })
+```
+
+# Credits
+
+Made by the loving team at [@bustle](https://bustle.com/jobs) and maybe [you](https://github.com/bustle/bluestream/compare)?
