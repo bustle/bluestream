@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/bustle/bluestream.svg?branch=master)](https://travis-ci.org/bustle/bluestream) [![Try bluestream on RunKit](https://badge.runkitcdn.com/bluestream.svg)](https://npm.runkit.com/bluestream)
 
 
-A collection of NodeJS Streams and stream utilities that work well with promises and async functions. Think `through2-concurrent` with promise support. The goal is to reduce the edge cases when mixing streams and promises. In general Promises are slower than callbacks but these streams a lot more forgiving than node core.
+Bluestream is a collection of NodeJS Streams and stream utilities that work well with promises and async functions. Think `through2-concurrent` with promise support. The goal is to reduce the edge cases when mixing streams and promises. In general, Promises are slower than callbacks, but these streams are a lot more forgiving than node core.
 
 Written in typescript, designed in NYC.
 
@@ -53,7 +53,7 @@ console.log('caught them all')
 
 ## ReadStream
 
-Create a read-promise stream. Pass it a function that takes the number of bytes or objects of wanted data and and uses `this.push` or `return` to push values or promises. This function should return a promise that indicates when the object/chunk are fully processed. Return or push `null` to end the stream.
+Creates a read-promise stream which accepts a function that takes the number of bytes or objects of wanted data as arguments and uses `this.push` or `return` to push values or promises. This function should return a promise that indicates when the object/chunk is fully processed. Return or push `null` to end the stream.
 
 Options:
   * `read` - An optional way to pass the read function
@@ -64,19 +64,19 @@ Options:
 
 The other options are also passed to node's Read stream constructor.
 
-A `ReadStream` works like a normal `ReadableStream` but the `_read` and `push()` methods have some notable differences. (The `_read` method can be provided as the only argument, in a `read` key on the options, or as the `_read` method if you extend `ReadStream`.) Any returned, non undefined, value will automatically be pushed. Object mode is the default.
+A `ReadStream` works like a normal `ReadableStream` but the `_read` and `push()` methods have some noteworthy differences. (The `_read` method can be provided as the only argument, in a `read` key on the options, or as the `_read` method if you extend `ReadStream`.) Any returned, non-undefined value will automatically be pushed. Object mode is the default.
 
 `_read(bytesWanted)`
-- Is async function friendly, a rejection/throw will be handled as an error event
+- Is async function friendly, handles throws/rejects as error events
 - Is called again only after it returns or resolves regardless of how many times you call `.push`
-- Is called again if you don't push (To aid in control flow)
+- Is called again if you don't push (to aid in control flow)
 - Pushes any non `undefined` return values
 
 `this.push()`
-- Can be pushed a promise, which will be resolved and then pushed as normal
-- returns true or false like a normal stream's push
+- Can be called in a promise, which will be resolved and then pushed as normal
+- Returns true or false like a normal stream's push
 
-This allows you to use it in some friendly ways.
+This allows you to use it in some friendly ways:
 
 ```js
 // readable stream from an array
@@ -98,16 +98,16 @@ const hscanStream = bstream.read(async () => {
 })
 ```
 
-## transform
-## map
+## transform (alias map)
 
 `transform([opts:Options,] fn:(data[, enc]) => Promise)): TransformStream`
 
+`map([opts:Options,] fn:(data[, enc]) => Promise)): TransformStream`
+
 ## TransformStream
 
-Create a transform-promise stream. Pass it a function that takes data and
-encoding and uses `this.push` to push values or promises. Any returned, non undefined, value will automatically be pushed. This function should
-return a promise that indicates when the object/chunk are fully processed.
+Creates a transform-promise stream which accepts a function that takes data and
+encoding as arguments and uses `this.push` to push values or promises. Any returned, non-undefined value will automatically be pushed. This function should return a promise that indicates when the object/chunk is fully processed.
 
 Options:
   * `transform` - An optional way to pass the transform function
@@ -117,7 +117,7 @@ Options:
     start buffering incoming objects. Defaults to `1`
 
   * `highWatermark` - the size (in objects) of the buffer mentioned above. When
-    this buffer fills up, the backpressure mechanism will activate. Its passed
+    this buffer fills up, the backpressure mechanism will activate. It's passed
     to node's transform stream.
 
 The other options are also passed to node's Transform stream constructor.
@@ -130,8 +130,7 @@ The other options are also passed to node's Transform stream constructor.
 
 `new WriteStream(inputOpts: IWritableStreamOptions | writeFunction, fn?: writeFunction): WriteStream`
 
-Create a write-promise stream. Pass it a function that takes data and
-encoding returns a promise that indicates when the object/chunk are fully processed.
+Creates a write-promise stream which accepts a function that takes data and encoding as arguments and returns a promise that indicates when the object/chunk is fully processed.
 
 Options:
   * `write` - An optional way to pass the write function
@@ -143,7 +142,7 @@ Options:
     start buffering incoming objects. Defaults to `1`
 
   * `highWatermark` - the size (in objects) of the buffer mentioned above. When
-    this buffer fills up, the backpressure mechanism will activate. Its passed
+    this buffer fills up, the backpressure mechanism will activate. It's passed
     to node's write stream.
 
 The other options are also passed to node's Write stream constructor.
@@ -152,7 +151,7 @@ The other options are also passed to node's Write stream constructor.
 
 `filter([opts:Options,] fn: async (data[, enc]) => boolean): FilterStream`
 
-Create a new FilterStream. The function should return a boolean to
+Creates a new FilterStream which accepts a function that takes data and encoding as arguments and returns a boolean to
 indicate whether the data value should pass to the next stream
 
 Options: Same as `transform`
@@ -161,8 +160,8 @@ Options: Same as `transform`
 
 `reduce([opts:Options,] fn: (acc, data[, enc]) => Promise): ReduceStream`
 
-Reduces the objects in this promise stream. The function takes the resolved
-current accumulator and data object and should return the next accumulator
+Creates a new ReduceStream which accepts a function that takes the resolved
+current accumulator, data object, and encoding as arguments and returns the next accumulator
 or a promise for the next accumulator.
 
 The ReduceStream has a `promise()` method which returns the final
@@ -183,7 +182,7 @@ tap(opts?: ITransformStreamOptions | ITapFunction, fn?: ITapFunction) => TapStre
 new TapStream(opts?: ITransformStreamOptions | ITapFunction, tapFunction?: ITapFunction)
 ```
 
-A pass through stream that lets you intercepts data and process it. Support async tap functions which will delay processing. Supports `concurrent` if you need it.
+A passthrough stream that intercepts data and lets you process it. Supports async tap functions which will delay processing. Supports `concurrent` if you need it.
 
 ```ts
 import { pipe, tap, write } from 'bluestream'
@@ -228,15 +227,15 @@ await pipe(
 
 `wait(stream: Stream): Promise<any>`
 
-Wait for the stream to end. Rejects on errors. If the stream has a `.promise()` method resolve that value, like from [reduce](#reduce).
+Waits for the stream to end. Rejects on errors. If the stream has a `.promise()` method, it will resolve that value, e.g., from [reduce](#reduce).
 
 ## pipe
 
 `pipe(readable: Readable, ...writableStreams: Writable[]): Promise<any>;`
 
-Pipes readable to writableStreams and forwards all errors to the resulting promise. The promise when the destination stream ends. If the last writableStream has a `.promise()` method that is resolved. If the last stream is a reduce stream the final value is resolved.
+Pipes readable to writableStreams and forwards all errors to the resulting promise. The promise resolves when the destination stream ends. If the last writableStream has a `.promise()` method, it is resolved. If the last stream is a reduce stream the final value is resolved.
 
-Pipe example
+Generic Pipe example
 ```ts
 import { pipe, read, write } from 'bluestream'
 const values = [1, 2, 3, null]
@@ -247,7 +246,7 @@ await pipe(
 
 ```
 
-Reduce example
+Pipe example with reduce
 ```ts
 import { pipe, read, reduce } from 'bluestream'
 const values = [1, 2, 3, null]
@@ -263,7 +262,7 @@ console.log(sum)
 
 `collect(stream: Readable): Promise<null | string | any[] | Buffer>`
 
-Returns a Buffer, string or array of all the data events concatenated together. If no events null is returned.
+Returns a Buffer, string or array of all the data events concatenated together. If there are no events, null is returned.
 
 ```ts
 import { collect, read } from 'bluestream'
@@ -282,7 +281,7 @@ await collect(read(() => null))
 
 `readAsync(stream: Readable, count?: number): Promise<any>`
 
-Returns a count of bytes in a Buffer, characters in a string or objects in an array. If no data arrives before the stream ends `null` is returned.
+Returns a count of bytes in a Buffer, characters in a string, or objects in an array. If no data arrives before the stream ends, `null` is returned.
 
 ## iterate
 
@@ -294,9 +293,9 @@ Returns an async iterator for any stream on node 8+
 
 `promise(stream: Readable) => Promise(any)`
 
-All bluestream streams implement a promise method that returns a promise that's fulfilled at the end of the stream, rejected if any errors are emitted by the stream.
+All bluestream streams implement a promise method that returns a promise that is fulfilled at the end of the stream or rejected if any errors are emitted by the stream.
 
-For `ReduceStreams`, the promise is for the final reduction result. Any stream errors or exceptions encountered while reducing will result with a rejection of the promise.
+For `ReduceStreams`, the promise is for the final reduction result. Any stream errors or exceptions encountered while reducing will result in a rejection of the promise.
 
 ```ts
 const { pipe, map, tap, reduce } = require('bluestream')
