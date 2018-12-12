@@ -5,7 +5,16 @@
 
 Bluestream is a collection of NodeJS Streams and stream utilities that work well with promises and async functions. Think `through2-concurrent` with promise support. The goal is to reduce the edge cases when mixing streams and promises. In general, Promises are slower than callbacks, but these streams are a lot more forgiving than node core.
 
+If you don't need streams but want to work with data over time, check out sister project [`streaming-iterables 🏄‍♂️`](https://www.npmjs.com/package/streaming-iterables)!
+
 Written in typescript, designed in NYC.
+
+## Install
+There are no dependencies.
+
+```bash
+npm install bluestream
+```
 
 # Examples
 
@@ -45,6 +54,23 @@ console.log('caught them all')
 ```
 
 # api
+
+- [`read()`](#read)
+- [`ReadStream()`](#readstream)
+- [`transform()`](#transform) (alias `map`)
+- [`TransformStream()`](#transformstream)
+- [`write()`](#write)
+- [`WriteStream()`](#writestream)
+- [`filter()`](#filter)
+- [`reduce()`](#reduce)
+- [`tap()`](#tap)
+- [`batch()`](#batch)
+- [`wait()`](#wait)
+- [`pipe()`](#pipe)
+- [`collect()`](#collect)
+- [`readAsync()`](#readasync)
+- [`iterate()`](#iterate)
+- [`promise()`](#promise)
 
 ## read
 
