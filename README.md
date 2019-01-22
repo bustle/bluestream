@@ -57,7 +57,7 @@ console.log('caught them all')
 
 - [`read()`](#read)
 - [`ReadStream()`](#readstream)
-- [`transform()`](#transform) (alias `map`)
+- [`transform()`](#transform-alias-map) (alias `map`)
 - [`TransformStream()`](#transformstream)
 - [`write()`](#write)
 - [`WriteStream()`](#writestream)
