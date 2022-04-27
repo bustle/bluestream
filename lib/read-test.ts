@@ -13,10 +13,12 @@ function promiseImmediate (data?) {
 describe('ReadStream', () => {
   describe('constructors', () => {
     it('read()', async () => {
+       // eslint-disable-next-line @typescript-eslint/no-empty-function
       assert.instanceOf(read(async () => {}), ReadStream)
     })
 
     it('new ReadStream()', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       const stream = new ReadStream(() => {})
       assert.instanceOf(stream, ReadStream)
     })

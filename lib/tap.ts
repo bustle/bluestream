@@ -14,6 +14,7 @@ export class TapStream extends TransformStream {
       this.tapFunction = tapFunction
     } else {
       super({})
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       this.tapFunction = () => {}
     }
   }

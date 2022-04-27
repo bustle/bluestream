@@ -42,6 +42,7 @@ function countEvents (stream) {
 
 describe('#readAsync', () => {
   it("rejects if it's not a readable stream", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     const writeStream = write(() => {})
     await readAsync(writeStream as any, 1).then(() => {
       assert.isTrue(false, 'The promise should have rejected')

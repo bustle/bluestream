@@ -6,8 +6,9 @@ notifications:
   email: false
 node_js:
   - 'node'
-  - '10'
-  - '8'
+  - '16'
+  - '14'
+  - '12'
 install: npm install
 after_success:
   - npm run semantic-release
