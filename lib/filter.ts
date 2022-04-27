@@ -25,5 +25,4 @@ export class FilterStream extends TransformStream {
   }
 }
 
-// tslint:disable-next-line:max-line-length
 export const filter = (opts: ITransformStreamOptions | IFilterFunction, fn?: IFilterFunction) => new FilterStream(opts, fn)

@@ -11,7 +11,7 @@
     "test": "npm run unit-test && npm run lint",
     "unit-test": "mocha lib/*-test.ts",
     "lint": "tsc && eslint lib/*.ts",
-    "format": "tslint -p tsconfig-test.json lib/*.ts --fix",
+    "format": "eslint lib/*.ts --fix",
     "build": "tsc",
     "prepare": "npm run build"
   },

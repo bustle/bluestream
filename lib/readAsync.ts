@@ -60,7 +60,6 @@ export const readAsync = async (stream: Readable, count?: number) => {
     throw new TypeError('"stream" is not a readable stream')
   }
   if ((stream as any)._readableState.flowing) {
-    // tslint:disable-next-line
     throw new TypeError('"stream" is in flowing mode, this is probably not what you want as data loss could occur. Please use stream.pause() to pause the stream before calling readAsync.');
   }
 
