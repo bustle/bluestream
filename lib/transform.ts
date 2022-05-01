@@ -2,7 +2,7 @@ import { DuplexOptions, Transform } from 'stream'
 import { IBluestream } from './interfaces'
 import { defer, maybeResume } from './utils'
 
-async function transformHandler (this: TransformStream, data, encoding, done) {
+function transformHandler (this: TransformStream, data, encoding, done) {
   // This works around a bug where you cannot call done twice in a single event loop
   // https://github.com/spion/promise-streams/blob/master/index.js#L70-L73
   // We've been able to observe this bug in production but not reproduce it in tests
